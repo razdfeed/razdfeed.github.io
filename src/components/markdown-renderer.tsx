@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
 
 function ZoomableImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
@@ -36,6 +37,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
       components={{
         code: ({ className, children, ...props }) => {
           const match = /language-(\w+)/.exec(className || '');
