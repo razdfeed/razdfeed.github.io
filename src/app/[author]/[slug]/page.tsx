@@ -42,7 +42,16 @@ export default async function PostPage({
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<img[^>]*width="\d+"[^>]*height="\d+"[^>]*>/gi, (match) =>
       match.replace(/width="\d+"\s+height="\d+"/gi, ''),
-    );
+    )
+    .replace(
+      /<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*>/gi,
+      '![$1]($2)',
+    )
+    .replace(
+      /<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/gi,
+      '![$2]($1)',
+    )
+    .replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, '![]($1)');
 
   return (
     <HomeLayout {...baseOptions()}>
