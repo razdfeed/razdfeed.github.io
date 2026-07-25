@@ -28,7 +28,7 @@ interface AuthorInfo {
 
 async function fetchPosts(author: string): Promise<DiscussionPost[]> {
   try {
-    const res = await fetch(`/data/${author}/posts.json`);
+    const res = await fetch(`/data/${author}/posts.json`, { cache: 'no-store' });
     if (!res.ok) return [];
     return await res.json();
   } catch {
@@ -38,7 +38,7 @@ async function fetchPosts(author: string): Promise<DiscussionPost[]> {
 
 async function fetchAuthorInfo(author: string): Promise<AuthorInfo | null> {
   try {
-    const res = await fetch(`/data/${author}/author.json`);
+    const res = await fetch(`/data/${author}/author.json`, { cache: 'no-store' });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -48,7 +48,7 @@ async function fetchAuthorInfo(author: string): Promise<AuthorInfo | null> {
 
 async function fetchPost(author: string, slug: string): Promise<DiscussionPost | null> {
   try {
-    const res = await fetch(`/data/${author}/${slug}.json`);
+    const res = await fetch(`/data/${author}/${slug}.json`, { cache: 'no-store' });
     if (!res.ok) return null;
     return await res.json();
   } catch {
