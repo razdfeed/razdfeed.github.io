@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { CodeBlock, Pre } from 'fumadocs-ui/components/codeblock';
+import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
 
 function ZoomableImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   const [zoomed, setZoomed] = useState(false);
@@ -39,11 +39,28 @@ export function MarkdownRenderer({ content }: { content: string }) {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
       components={{
-        pre: ({ ref: _ref, ...props }) => (
-          <CodeBlock {...props}>
-            <Pre>{props.children}</Pre>
-          </CodeBlock>
-        ),
+        pre: ({ ref: _ref, ...props }) => {
+          const codeEl = props.children as React.ReactElement<{
+            className?: string;
+            children?: string;
+          }>;
+          const className = codeEl?.props?.className ?? '';
+          const lang = className.match(/language-(\w+)/)?.[1] ?? 'text';
+          const code = String(codeEl?.props?.children ?? '');
+
+          return (
+            <DynamicCodeBlock
+              lang={lang}
+              code={code}
+              options={{
+                themes: {
+                  light: 'github-light',
+                  dark: 'github-dark',
+                },
+              }}
+            />
+          );
+        },
         img: ZoomableImage,
         a: (props) => (
           <a {...props} target="_blank" rel="noopener noreferrer" />
