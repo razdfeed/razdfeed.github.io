@@ -39,14 +39,20 @@ export function MarkdownRenderer({ content }: { content: string }) {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
       components={{
-        pre: ({ ref: _ref, ...props }) => {
-          const codeEl = props.children as React.ReactElement<{
+        pre: (props) => {
+          const child = Array.isArray(props.children)
+            ? props.children[0]
+            : props.children;
+          const codeEl = child as React.ReactElement<{
             className?: string;
-            children?: string;
+            children?: React.ReactNode;
           }>;
           const className = codeEl?.props?.className ?? '';
-          const lang = className.match(/language-(\w+)/)?.[1] ?? 'text';
-          const code = String(codeEl?.props?.children ?? '');
+          const lang = /language-(\w+)/.exec(className)?.[1] ?? 'text';
+          const rawChildren = codeEl?.props?.children;
+          const code = Array.isArray(rawChildren)
+            ? rawChildren.join('')
+            : String(rawChildren ?? '');
 
           return (
             <DynamicCodeBlock
