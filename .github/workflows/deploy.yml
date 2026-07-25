@@ -29,6 +29,12 @@ jobs:
         run: bun run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_GITHUB_TOKEN: ${{ secrets.PUBLIC_GITHUB_TOKEN }}
+
+      - name: Create SPA fallback
+        run: |
+          cp ./out/_author/index.html ./out/404.html
+          cp ./out/_author/_post/index.html ./out/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
