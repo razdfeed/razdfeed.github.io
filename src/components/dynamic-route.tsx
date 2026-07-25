@@ -18,12 +18,16 @@ export function DynamicRoute() {
   }, []);
 
   if (segments === null) {
-    return <AuthorPageClient />;
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <p className="text-fd-muted-foreground">Загрузка…</p>
+      </div>
+    );
   }
 
   if (segments.length <= 1) {
-    return <AuthorPageClient />;
+    return <AuthorPageClient key="author" />;
   }
 
-  return <BlogPostClient />;
+  return <BlogPostClient key="post" />;
 }
