@@ -13,6 +13,7 @@ const config = {
     unoptimized: true,
   },
   basePath: basePath || undefined,
+  trailingSlash: true,
   serverExternalPackages: ['@takumi-rs/core'],
   reactStrictMode: true,
 };

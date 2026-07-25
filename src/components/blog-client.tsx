@@ -26,97 +26,29 @@ interface AuthorInfo {
   html_url: string;
 }
 
-async function fetchBlogConfig(author: string) {
-  const url = `https://raw.githubusercontent.com/${author}/razdfeed/main/.razdfeed.yml`;
+async function fetchPosts(author: string): Promise<DiscussionPost[]> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(`/data/${author}/posts.json`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchAuthorInfo(author: string): Promise<AuthorInfo | null> {
+  try {
+    const res = await fetch(`/data/${author}/author.json`);
     if (!res.ok) return null;
-    const text = await res.text();
-
-    const config: { name: string; category: string; source?: { repo: string } } = {
-      name: author,
-      category: 'Announcements',
-      source: undefined,
-    };
-
-    const nameMatch = text.match(/name:\s*["']?([^"'\n]+)["']?/);
-    if (nameMatch) config.name = nameMatch[1].trim();
-    const sourceRepoMatch = text.match(/repo:\s*["']?([^"'\n]+)["']?/);
-    if (sourceRepoMatch) config.source = { repo: sourceRepoMatch[1].trim() };
-
-    return config;
+    return await res.json();
   } catch {
     return null;
   }
 }
 
-function parseAtomFeed(xml: string, author: string): DiscussionPost[] {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xml, 'application/xml');
-  const entries = doc.querySelectorAll('entry');
-  const posts: DiscussionPost[] = [];
-
-  entries.forEach((entry) => {
-    const id = entry.querySelector('id')?.textContent ?? '';
-    const number = parseInt(id.split(':').pop() ?? '0', 10);
-    const title = entry.querySelector('title')?.textContent?.trim() ?? '';
-    const link = entry.querySelector('link[rel=alternate]')?.getAttribute('href') ?? '';
-    const published = entry.querySelector('published')?.textContent ?? '';
-    const content = entry.querySelector('content')?.textContent ?? '';
-    const authorName = entry.querySelector('author > name')?.textContent ?? author;
-    const authorUri = entry.querySelector('author > uri')?.textContent ?? '';
-    const thumbnail = entry.querySelector('thumbnail')?.getAttribute('url') ?? '';
-
-    posts.push({
-      number,
-      title,
-      body: content,
-      url: link,
-      createdAt: published,
-      author: authorName,
-      authorUrl: authorUri,
-      authorAvatar: thumbnail,
-      slug: String(number),
-    });
-  });
-
-  return posts;
-}
-
-async function fetchPosts(author: string): Promise<DiscussionPost[]> {
-  const config = await fetchBlogConfig(author);
-  let repo = 'razdfeed';
-
-  if (config?.source?.repo) {
-    const [, repoName] = config.source.repo.split('/');
-    repo = repoName;
-  }
-
-  const feedUrl = `https://github.com/${author}/${repo}/discussions.atom`;
-
-  const proxies = [
-    `https://r.jina.ai/${feedUrl}`,
-    `https://corsproxy.io/?url=${encodeURIComponent(feedUrl)}`,
-    `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(feedUrl)}`,
-  ];
-
-  for (const proxy of proxies) {
-    try {
-      const res = await fetch(proxy);
-      if (!res.ok) continue;
-      const xml = await res.text();
-      if (xml.includes('<entry>')) return parseAtomFeed(xml, author);
-    } catch {
-      continue;
-    }
-  }
-
-  return [];
-}
-
-async function fetchAuthorInfo(author: string): Promise<AuthorInfo | null> {
+async function fetchPost(author: string, slug: string): Promise<DiscussionPost | null> {
   try {
-    const res = await fetch(`https://api.github.com/users/${author}`);
+    const res = await fetch(`/data/${author}/${slug}.json`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -196,16 +128,15 @@ export function BlogPostClient() {
     if (!author || !slug) return;
     async function load() {
       try {
-        const [posts, userInfo] = await Promise.all([
-          fetchPosts(author),
+        const [postInfo, userInfo] = await Promise.all([
+          fetchPost(author, slug),
           fetchAuthorInfo(author),
         ]);
         setUser(userInfo);
-        const found = posts.find((p) => p.slug === slug);
-        if (!found) {
+        if (!postInfo) {
           setNotFoundPost(true);
         } else {
-          setPost(found);
+          setPost(postInfo);
         }
       } catch {
         setNotFoundPost(true);

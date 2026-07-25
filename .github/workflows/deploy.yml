@@ -30,6 +30,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Fetch blog data
+        run: bun run scripts/fetch-data.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHORS: dealenx
+
       - name: Create SPA fallback
         run: |
           cp ./out/_author.html ./out/404.html
