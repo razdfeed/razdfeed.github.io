@@ -95,8 +95,8 @@ async function fetchPosts(author: string): Promise<DiscussionPost[]> {
   const feedUrl = `https://github.com/${author}/${repo}/discussions.atom`;
 
   const proxies = [
+    `https://r.jina.ai/${feedUrl}`,
     `https://corsproxy.io/?url=${encodeURIComponent(feedUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`,
     `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(feedUrl)}`,
   ];
 
