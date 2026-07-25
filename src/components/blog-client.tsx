@@ -12,39 +12,18 @@ interface DiscussionPost {
   body: string;
   url: string;
   createdAt: string;
-  updatedAt: string;
   author: string;
   authorUrl: string;
   authorAvatar: string;
-  category: string;
-  labels: string[];
   slug: string;
 }
 
 interface AuthorInfo {
   login: string;
   name: string | null;
-  avatarUrl: string;
+  avatar_url: string;
   bio: string | null;
-  url: string;
-}
-
-const GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql';
-
-async function fetchGraphQL(query: string, variables: Record<string, unknown>) {
-  const token = process.env.NEXT_PUBLIC_GITHUB_TOKEN;
-  const res = await fetch(GITHUB_GRAPHQL_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  if (!res.ok) throw new Error(`GitHub GraphQL error: ${res.status}`);
-  const json = await res.json();
-  if (json.errors) throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
-  return json.data;
+  html_url: string;
 }
 
 async function fetchBlogConfig(author: string) {
@@ -54,19 +33,14 @@ async function fetchBlogConfig(author: string) {
     if (!res.ok) return null;
     const text = await res.text();
 
-    const config: { name: string; description: string; language: string; category: string; labels: string[]; source?: { repo: string; category?: string } } = {
+    const config: { name: string; category: string; source?: { repo: string } } = {
       name: author,
-      description: '',
-      language: 'ru',
       category: 'Announcements',
-      labels: [],
       source: undefined,
     };
 
     const nameMatch = text.match(/name:\s*["']?([^"'\n]+)["']?/);
     if (nameMatch) config.name = nameMatch[1].trim();
-    const catMatch = text.match(/category:\s*["']?([^"'\n]+)["']?/);
-    if (catMatch) config.category = catMatch[1].trim();
     const sourceRepoMatch = text.match(/repo:\s*["']?([^"'\n]+)["']?/);
     if (sourceRepoMatch) config.source = { repo: sourceRepoMatch[1].trim() };
 
@@ -76,71 +50,63 @@ async function fetchBlogConfig(author: string) {
   }
 }
 
+function parseAtomFeed(xml: string, author: string): DiscussionPost[] {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, 'application/xml');
+  const entries = doc.querySelectorAll('entry');
+  const posts: DiscussionPost[] = [];
+
+  entries.forEach((entry) => {
+    const id = entry.querySelector('id')?.textContent ?? '';
+    const number = parseInt(id.split(':').pop() ?? '0', 10);
+    const title = entry.querySelector('title')?.textContent?.trim() ?? '';
+    const link = entry.querySelector('link[rel=alternate]')?.getAttribute('href') ?? '';
+    const published = entry.querySelector('published')?.textContent ?? '';
+    const content = entry.querySelector('content')?.textContent ?? '';
+    const authorName = entry.querySelector('author > name')?.textContent ?? author;
+    const authorUri = entry.querySelector('author > uri')?.textContent ?? '';
+    const thumbnail = entry.querySelector('thumbnail')?.getAttribute('url') ?? '';
+
+    posts.push({
+      number,
+      title,
+      body: content,
+      url: link,
+      createdAt: published,
+      author: authorName,
+      authorUrl: authorUri,
+      authorAvatar: thumbnail,
+      slug: String(number),
+    });
+  });
+
+  return posts;
+}
+
 async function fetchPosts(author: string): Promise<DiscussionPost[]> {
   const config = await fetchBlogConfig(author);
-  let postsOwner = author;
-  let postsRepo = 'razdfeed';
-  let category: string | undefined;
+  let repo = 'razdfeed';
 
   if (config?.source?.repo) {
-    const [owner, repo] = config.source.repo.split('/');
-    postsOwner = owner;
-    postsRepo = repo;
-    category = config.source.category;
-  } else if (config) {
-    category = config.category;
+    const [, repoName] = config.source.repo.split('/');
+    repo = repoName;
   }
 
-  const query = `
-    query($owner: String!, $repo: String!) {
-      repository(owner: $owner, name: $repo) {
-        discussions(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) {
-          nodes {
-            number title body url createdAt updatedAt
-            author { login url avatarUrl }
-            labels(first: 10) { nodes { name } }
-            category { name }
-          }
-        }
-      }
-    }
-  `;
-
   try {
-    const data = await fetchGraphQL(query, { owner: postsOwner, repo: postsRepo });
-    let posts: DiscussionPost[] = data.repository.discussions.nodes.map((d: Record<string, unknown>) => ({
-      number: d.number as number,
-      title: d.title as string,
-      body: d.body as string,
-      url: d.url as string,
-      createdAt: d.createdAt as string,
-      updatedAt: d.updatedAt as string,
-      author: (d.author as { login: string })?.login ?? 'unknown',
-      authorUrl: (d.author as { url: string })?.url ?? '',
-      authorAvatar: (d.author as { avatarUrl: string })?.avatarUrl ?? '',
-      category: (d.category as { name: string })?.name ?? '',
-      labels: ((d.labels as { nodes: Array<{ name: string }> })?.nodes ?? []).map((l) => l.name),
-      slug: String(d.number),
-    }));
-
-    if (category) posts = posts.filter((p) => p.category === category);
-    return posts;
+    const res = await fetch(`https://github.com/${author}/${repo}/discussions.atom`);
+    if (!res.ok) return [];
+    const xml = await res.text();
+    return parseAtomFeed(xml, author);
   } catch {
     return [];
   }
 }
 
 async function fetchAuthorInfo(author: string): Promise<AuthorInfo | null> {
-  const query = `
-    query($login: String!) {
-      user(login: $login) {
-        login name avatarUrl bio url
-      }
-    }
-  `;
   try {
-    const data = await fetchGraphQL(query, { login: author });
-    return data.user;
+    const res = await fetch(`https://api.github.com/users/${author}`);
+    if (!res.ok) return null;
+    return await res.json();
   } catch {
     return null;
   }
@@ -151,6 +117,52 @@ function getPathSegments(): string[] {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const path = window.location.pathname.replace(base, '');
   return path.split('/').filter(Boolean);
+}
+
+function cleanGitHubHtml(html: string): string {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  tmp.querySelectorAll('a').forEach((el) => {
+    const href = el.getAttribute('href') ?? '';
+    if (href.startsWith('https://private-user-images.githubusercontent.com/')) {
+      const img = el.querySelector('img');
+      if (img) {
+        const src = img.getAttribute('src') ?? '';
+        const alt = img.getAttribute('alt') ?? '';
+        el.outerHTML = `<img src="${src}" alt="${alt}" />`;
+      }
+    }
+  });
+
+  tmp.querySelectorAll('img').forEach((el) => {
+    el.removeAttribute('width');
+    el.removeAttribute('height');
+    el.removeAttribute('style');
+    el.removeAttribute('class');
+  });
+
+  tmp.querySelectorAll('div.highlight').forEach((el) => {
+    const pre = el.querySelector('pre');
+    if (pre) {
+      const code = pre.textContent ?? '';
+      const lang = el.className.match(/highlight-source-(\w+)/)?.[1] ?? 'text';
+      el.outerHTML = `\n\`\`\`${lang}\n${code.replace(/\n$/, '')}\n\`\`\`\n`;
+    }
+  });
+
+  tmp.querySelectorAll('.snippet-clipboard-content').forEach((el) => {
+    const code = el.querySelector('code');
+    if (code) {
+      const text = code.textContent ?? '';
+      el.outerHTML = `\n\`\`\`\n${text.replace(/\n$/, '')}\n\`\`\`\n`;
+    }
+  });
+
+  tmp.querySelectorAll('[dir]').forEach((el) => el.removeAttribute('dir'));
+  tmp.querySelectorAll('.js-gh-image-fallback').forEach((el) => el.remove());
+
+  return tmp.innerHTML;
 }
 
 export function BlogPostClient() {
@@ -215,19 +227,7 @@ export function BlogPostClient() {
     );
   }
 
-  const cleanBody = post.body
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<img[^>]*width="\d+"[^>]*height="\d+"[^>]*>/gi, (match) =>
-      match.replace(/width="\d+"\s+height="\d+"/gi, ''),
-    )
-    .replace(
-      /<img\s+([^>]*?)src="([^"]*?)"([^>]*?)\s*\/?>/gi,
-      (_full, before, src, after) => {
-        const altMatch = `${before} ${after}`.match(/alt="([^"]*?)"/i);
-        const alt = altMatch?.[1] ?? '';
-        return `![${alt}](${src})`;
-      },
-    );
+  const cleanBody = cleanGitHubHtml(post.body);
 
   return (
     <HomeLayout {...baseOptions()}>
@@ -241,12 +241,12 @@ export function BlogPostClient() {
         <header className="mb-8 border-b pb-6">
           <h1 className="text-3xl font-bold tracking-tight">{post.title}</h1>
           <div className="mt-4 flex items-center gap-3">
-            {user?.avatarUrl && (
-              <img src={user.avatarUrl} alt={author} width={32} height={32} className="rounded-full" />
+            {user?.avatar_url && (
+              <img src={user.avatar_url} alt={author} width={32} height={32} className="rounded-full" />
             )}
             <div className="text-sm text-fd-muted-foreground">
               <a
-                href={user?.url ?? `https://github.com/${author}`}
+                href={user?.html_url ?? `https://github.com/${author}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium hover:underline"
@@ -261,15 +261,6 @@ export function BlogPostClient() {
               })}
             </div>
           </div>
-          {post.labels.length > 0 && (
-            <div className="mt-3 flex gap-2">
-              {post.labels.map((label) => (
-                <span key={label} className="rounded-full bg-fd-muted px-2 py-0.5 text-xs">
-                  {label}
-                </span>
-              ))}
-            </div>
-          )}
         </header>
 
         <article className="prose prose-fd max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:rounded-lg prose-pre:bg-fd-muted/50 prose-img:rounded-lg">
@@ -355,14 +346,14 @@ export function AuthorPageClient() {
     <HomeLayout {...baseOptions()}>
       <div className="mx-auto max-w-2xl px-4 py-12">
         <header className="mb-12 flex items-center gap-4">
-          {user?.avatarUrl && (
-            <img src={user.avatarUrl} alt={author} width={64} height={64} className="rounded-full" />
+          {user?.avatar_url && (
+            <img src={user.avatar_url} alt={author} width={64} height={64} className="rounded-full" />
           )}
           <div>
             <h1 className="text-2xl font-bold">{user?.name ?? author}</h1>
             {user?.bio && <p className="text-fd-muted-foreground">{user.bio}</p>}
             <a
-              href={user?.url ?? `https://github.com/${author}`}
+              href={user?.html_url ?? `https://github.com/${author}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-fd-muted-foreground hover:underline"
@@ -389,15 +380,6 @@ export function AuthorPageClient() {
                         day: 'numeric',
                       })}
                     </p>
-                    {post.labels.length > 0 && (
-                      <div className="mt-2 flex gap-2">
-                        {post.labels.map((label) => (
-                          <span key={label} className="rounded-full bg-fd-muted px-2 py-0.5 text-xs">
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </Link>
                 </li>
               ))}
