@@ -92,8 +92,10 @@ async function fetchPosts(author: string): Promise<DiscussionPost[]> {
     repo = repoName;
   }
 
+  const feedUrl = `https://github.com/${author}/${repo}/discussions.atom`;
+
   try {
-    const res = await fetch(`https://github.com/${author}/${repo}/discussions.atom`);
+    const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
     if (!res.ok) return [];
     const xml = await res.text();
     return parseAtomFeed(xml, author);
