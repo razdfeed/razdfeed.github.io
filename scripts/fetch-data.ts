@@ -51,6 +51,7 @@ function parseAtomFeed(xml: string, author: string): Post[] {
 async function fetchPosts(author: string): Promise<Post[]> {
   const configUrl = `https://raw.githubusercontent.com/${author}/razdfeed/main/.razdfeed.yml`;
   let repo = 'razdfeed';
+  let owner = author;
 
   try {
     const configRes = await fetch(configUrl);
@@ -58,24 +59,43 @@ async function fetchPosts(author: string): Promise<Post[]> {
       const text = await configRes.text();
       const repoMatch = text.match(/repo:\s*["']?([^"'\n]+)["']?/);
       if (repoMatch) {
-        const [, repoName] = repoMatch[1].trim().split('/');
-        repo = repoName;
+        const parts = repoMatch[1].trim().split('/');
+        if (parts.length === 2) {
+          owner = parts[0];
+          repo = parts[1];
+        } else {
+          repo = parts[0];
+        }
       }
     }
   } catch {}
 
-  const feedUrl = `https://github.com/${author}/${repo}/discussions.atom`;
+  const feedUrl = `https://github.com/${owner}/${repo}/discussions.atom`;
 
   try {
     const res = await fetch(feedUrl);
     if (!res.ok) {
-      console.log(`  Feed fetch failed: ${res.status} ${res.statusText}`);
-      return [];
+      console.log(`  Feed fetch failed: ${res.status} ${res.statusText} for ${feedUrl}`);
+      if (owner !== author) return [];
+      const fallbackUrl = `https://github.com/${author}/${author}/discussions.atom`;
+      console.log(`  Trying fallback: ${fallbackUrl}`);
+      const fallbackRes = await fetch(fallbackUrl);
+      if (!fallbackRes.ok) return [];
+      const xml = await fallbackRes.text();
+      if (!xml.includes('<entry>')) return [];
+      return parseAtomFeed(xml, author);
     }
     const xml = await res.text();
     if (!xml.includes('<entry>')) {
       console.log(`  Feed has no entries, length: ${xml.length}`);
-      return [];
+      if (owner !== author) return [];
+      const fallbackUrl = `https://github.com/${author}/${author}/discussions.atom`;
+      console.log(`  Trying fallback: ${fallbackUrl}`);
+      const fallbackRes = await fetch(fallbackUrl);
+      if (!fallbackRes.ok) return [];
+      const fallbackXml = await fallbackRes.text();
+      if (!fallbackXml.includes('<entry>')) return [];
+      return parseAtomFeed(fallbackXml, author);
     }
     return parseAtomFeed(xml, author);
   } catch (e) {
