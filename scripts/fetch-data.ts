@@ -67,16 +67,19 @@ async function fetchPosts(author: string): Promise<Post[]> {
   const feedUrl = `https://github.com/${author}/${repo}/discussions.atom`;
 
   try {
-    const res = await fetch(feedUrl, {
-      headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: 'application/xml',
-      },
-    });
-    if (!res.ok) return [];
+    const res = await fetch(feedUrl);
+    if (!res.ok) {
+      console.log(`  Feed fetch failed: ${res.status} ${res.statusText}`);
+      return [];
+    }
     const xml = await res.text();
+    if (!xml.includes('<entry>')) {
+      console.log(`  Feed has no entries, length: ${xml.length}`);
+      return [];
+    }
     return parseAtomFeed(xml, author);
-  } catch {
+  } catch (e) {
+    console.log(`  Feed fetch error: ${e}`);
     return [];
   }
 }
