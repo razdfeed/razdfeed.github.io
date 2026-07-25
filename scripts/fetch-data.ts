@@ -23,7 +23,8 @@ function parseAtomFeed(xml: string, author: string): Post[] {
   while ((match = entryRegex.exec(xml)) !== null) {
     const entry = match[1];
     const id = entry.match(/<id>(.*?)<\/id>/)?.[1] ?? '';
-    const number = parseInt(id.split(':').pop() ?? '0', 10);
+    const link = entry.match(/<link[^>]*rel="alternate"[^>]*href="([^"]*)"/)?.[1] ?? '';
+    const number = parseInt(link.match(/\/discussions\/(\d+)/)?.[1] ?? id.split(':').pop() ?? '0', 10);
     const title = entry.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? '';
     const link = entry.match(/<link[^>]*rel="alternate"[^>]*href="([^"]*)"/)?.[1] ?? '';
     const publishedMatch = entry.match(/<published>(.*?)<\/published>/)?.[1] ?? '';
