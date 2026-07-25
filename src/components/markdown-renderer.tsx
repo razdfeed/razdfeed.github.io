@@ -39,34 +39,32 @@ export function MarkdownRenderer({ content }: { content: string }) {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
       components={{
-        pre: (props) => {
-          const child = Array.isArray(props.children)
-            ? props.children[0]
-            : props.children;
-          const codeEl = child as React.ReactElement<{
-            className?: string;
-            children?: React.ReactNode;
-          }>;
-          const className = codeEl?.props?.className ?? '';
-          const lang = /language-(\w+)/.exec(className)?.[1] ?? 'text';
-          const rawChildren = codeEl?.props?.children;
-          const code = Array.isArray(rawChildren)
-            ? rawChildren.join('')
-            : String(rawChildren ?? '');
+        code: ({ className, children, ...props }) => {
+          const match = /language-(\w+)/.exec(className || '');
+          const code = String(children).replace(/\n$/, '');
+
+          if (match) {
+            return (
+              <DynamicCodeBlock
+                lang={match[1]}
+                code={code}
+                options={{
+                  themes: {
+                    light: 'github-light',
+                    dark: 'github-dark',
+                  },
+                }}
+              />
+            );
+          }
 
           return (
-            <DynamicCodeBlock
-              lang={lang}
-              code={code}
-              options={{
-                themes: {
-                  light: 'github-light',
-                  dark: 'github-dark',
-                },
-              }}
-            />
+            <code className={className} {...props}>
+              {children}
+            </code>
           );
         },
+        pre: ({ children }) => <>{children}</>,
         img: ZoomableImage,
         a: (props) => (
           <a {...props} target="_blank" rel="noopener noreferrer" />
