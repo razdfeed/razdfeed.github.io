@@ -94,14 +94,24 @@ async function fetchPosts(author: string): Promise<DiscussionPost[]> {
 
   const feedUrl = `https://github.com/${author}/${repo}/discussions.atom`;
 
-  try {
-    const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
-    if (!res.ok) return [];
-    const xml = await res.text();
-    return parseAtomFeed(xml, author);
-  } catch {
-    return [];
+  const proxies = [
+    `https://corsproxy.io/?url=${encodeURIComponent(feedUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`,
+    `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(feedUrl)}`,
+  ];
+
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy);
+      if (!res.ok) continue;
+      const xml = await res.text();
+      if (xml.includes('<entry>')) return parseAtomFeed(xml, author);
+    } catch {
+      continue;
+    }
   }
+
+  return [];
 }
 
 async function fetchAuthorInfo(author: string): Promise<AuthorInfo | null> {
