@@ -14,9 +14,11 @@ RazdFeed собирает посты авторов из GitHub Discussions. Ч�
 3. Бот [fetcher-collector](https://github.com/razdfeed/fetcher-collector) находит этот файл, читает настройки и забирает посты.
 4. RazdFeed показывает их в общей ленте и на странице автора.
 
-## Минимальная настройка
+## Файл `.razdfeed.yml`
 
-Создайте репозиторий `{ваш-логин}/razdfeed` и файл `.razdfeed.yml` в его корне:
+> Конфигурация файла `.razdfeed.yml` находится в разработке. Текущий формат может измениться.
+
+Создайте файл `.razdfeed.yml` в корне репозитория `{ваш-логин}/razdfeed`:
 
 ```yaml
 name: Имя автора
@@ -25,26 +27,6 @@ language: ru
 ```
 
 По умолчанию бот возьмёт посты из `{ваш-логин}/{ваш-логин}/discussions/categories/Announcements`.
-
-## Параметры файла
-
-```yaml
-name: Имя автора
-description: Короткое описание блога
-language: ru
-category: Announcements
-labels:
-  - blog
-source:
-  repo: owner/repo
-```
-
-- `name` — имя автора, которое отображается на сайте.
-- `description` — описание блога.
-- `language` — язык постов (`ru`, `en` и т.д.).
-- `category` — категория GitHub Discussions для импорта (по умолчанию `Announcements`).
-- `labels` — метки issues/discussions, которые нужно импортировать.
-- `source.repo` — репозиторий, где находятся посты. Если не указан, используется `{author}/{author}`.
 
 ## Требования
 
