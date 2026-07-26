@@ -14,6 +14,7 @@ import { HomeTOC } from '@/components/home-toc';
 import { extractTOC } from '@/lib/extract-toc';
 import { SkeletonCard, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
 import { GiscusComments, type GiscusConfig } from '@/components/giscus-comments';
+import { TelegramComments } from '@/components/telegram-comments';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 import { MediaImage } from '@/components/media-image';
@@ -545,6 +546,9 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
           </footer>
 
           <GiscusComments config={giscusConfig ?? null} term={post.number.toString()} />
+          {post.sourceType === 'telegram' && post.author && (
+            <TelegramComments channel={post.author} postId={post.number} />
+          )}
         </>
       )}
     </DocsPage>
