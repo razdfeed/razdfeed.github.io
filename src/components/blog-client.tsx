@@ -7,8 +7,8 @@ import { baseOptions } from '@/lib/layout.shared';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
 import { PostCard } from '@/components/post-card';
 import { SidebarNav } from '@/components/sidebar-nav';
-import { PopularPosts } from '@/components/popular-posts';
-import { SkeletonCard, SkeletonPopularPosts, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
+import { SiteAuthors } from '@/components/site-authors';
+import { SkeletonCard, SkeletonSiteAuthors, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -121,7 +121,7 @@ export function HomePageClient() {
             ))}
           </div>
           <div className="hidden md:block shrink-0">
-            <SkeletonPopularPosts />
+            <SkeletonSiteAuthors />
           </div>
         </div>
       </div>
@@ -183,7 +183,7 @@ export function HomePageClient() {
         </main>
 
         <div className="hidden md:block shrink-0">
-          <PopularPosts posts={posts} />
+          <SiteAuthors authors={authors} />
         </div>
       </div>
     </div>

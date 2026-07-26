@@ -24,13 +24,13 @@ export function SkeletonCard() {
   );
 }
 
-export function SkeletonPopularPosts() {
-  console.debug('[SkeletonPopularPosts] render');
+export function SkeletonSiteAuthors() {
+  console.debug('[SkeletonSiteAuthors] render');
   return (
     <aside className="w-full rounded-lg border bg-fd-card p-4 shadow-sm md:w-80">
-      <div className="mb-4 h-6 w-1/2 rounded skeleton-shimmer" />
+      <div className="mb-4 h-4 w-1/2 rounded skeleton-shimmer" />
       <ul className="flex flex-col gap-4">
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <li key={i} className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-full skeleton-shimmer shrink-0" />
             <div className="flex-1 space-y-2">
