@@ -70,51 +70,59 @@ function formatDate(iso: string): string {
 // ── Home page: three-column feed layout ───────────────────────────────────
 
 export function HomePageClient() {
+  const PAGE_SIZE = 15;
   const [authors, setAuthors] = useState<AuthorEntry[]>([]);
-  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [allPosts, setAllPosts] = useState<FeedPost[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [nextPage, setNextPage] = useState<string | null>('posts-1.json');
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [error, setError] = useState(false);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     async function load() {
       setError(false);
-      console.debug('[HomePageClient] initial load');
+      setLoadingInitial(true);
       const [a, firstPage] = await Promise.all([
         fetchAuthors(),
         fetchPostsPage('posts-1.json'),
       ]);
-      console.debug('[HomePageClient] authors loaded:', a.length);
       if (firstPage) {
-        console.debug('[HomePageClient] posts loaded:', firstPage.posts.length);
-        setPosts(firstPage.posts);
+        setAllPosts(firstPage.posts);
         setNextPage(firstPage.nextPage);
       } else {
-        console.warn('[HomePageClient] fetch error: first page is null');
         setError(true);
       }
       setAuthors(a);
       setChecked(true);
+      setLoadingInitial(false);
     }
     load();
   }, []);
 
   async function loadMore() {
-    if (!nextPage || loadingMore) return;
+    if (loadingMore) return;
+
+    if (visibleCount < allPosts.length) {
+      setVisibleCount((c) => Math.min(c + PAGE_SIZE, allPosts.length));
+      return;
+    }
+
+    if (!nextPage) return;
     setLoadingMore(true);
-    console.debug('[HomePageClient] loading more, nextPage:', nextPage);
     const result = await fetchPostsPage(nextPage);
     if (result) {
-      setPosts((prev) => [...prev, ...result.posts]);
+      setAllPosts((prev) => [...prev, ...result.posts]);
       setNextPage(result.nextPage);
-      console.debug('[HomePageClient] loaded more:', result.posts.length);
+      setVisibleCount((c) => c + PAGE_SIZE);
     } else {
-      console.warn('[HomePageClient] fetch error: more page is null');
       setNextPage(null);
     }
     setLoadingMore(false);
   }
+
+  const hasMore = visibleCount < allPosts.length || !!nextPage;
 
   return (
     <DocsPage
@@ -132,7 +140,7 @@ export function HomePageClient() {
         },
       }}
     >
-      {!checked ? null : error && posts.length === 0 ? (
+      {!checked ? null : error && allPosts.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-fd-muted-foreground">Не удалось загрузить ленту.</p>
           <button
@@ -142,14 +150,14 @@ export function HomePageClient() {
             Повторить
           </button>
         </div>
-      ) : posts.length === 0 ? (
+      ) : allPosts.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-fd-muted-foreground">Пока нет постов.</p>
         </div>
       ) : (
         <>
           <div className="divide-y divide-fd-border">
-            {posts.map((post) => (
+            {allPosts.slice(0, visibleCount).map((post) => (
               <PostCard
                 key={`${post.authorLogin}-${post.slug}`}
                 post={post}
@@ -166,7 +174,7 @@ export function HomePageClient() {
             </div>
           )}
 
-          {!loadingMore && nextPage && (
+          {!loadingMore && hasMore && (
             <div className="flex justify-center py-8">
               <button
                 onClick={loadMore}
