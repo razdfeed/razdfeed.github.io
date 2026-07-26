@@ -8,6 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://razdfeed.github.io'),
   title: {
     default: 'RazdFeed — Посты от авторов из GitHub',
     template: '%s | RazdFeed',

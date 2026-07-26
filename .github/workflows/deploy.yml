@@ -31,10 +31,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_PUBLIC_DATA_BASE: https://razdfeed.github.io/fetcher-collector/public/data
 
-      - name: Create SPA fallback
-        run: |
-          cp ./out/_author/_post/index.html ./out/404.html
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
