@@ -179,7 +179,7 @@ export function HomePageClient() {
             <div className="flex justify-center py-8">
               <button
                 onClick={loadMore}
-                className="text-sm font-medium text-fd-primary transition-colors hover:text-fd-primary/80"
+                className="cursor-pointer rounded-lg border border-fd-border bg-fd-secondary px-6 py-2.5 text-sm font-medium text-fd-foreground shadow-sm transition-all duration-200 hover:bg-fd-accent hover:text-fd-accent-foreground hover:shadow-md active:scale-95 active:bg-fd-accent"
               >
                 Показать ещё
               </button>
@@ -512,6 +512,20 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
           </div>
 
           <DocsBody>
+            {post.media && post.media.images.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {post.media.images.map((src, i) => (
+                  <img key={i} src={src} alt="" loading="lazy" className="rounded-lg object-cover w-full" style={{ maxHeight: '490px' }} />
+                ))}
+              </div>
+            )}
+            {post.media && post.media.videos.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {post.media.videos.map((src, i) => (
+                  <video key={i} src={src} controls preload="none" className="rounded-lg w-full" style={{ maxHeight: '490px' }} />
+                ))}
+              </div>
+            )}
             <MarkdownRenderer content={post.body} />
           </DocsBody>
 

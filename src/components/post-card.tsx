@@ -8,6 +8,11 @@ import { DocsBody } from 'fumadocs-ui/layouts/docs/page';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 
+interface FeedPostMedia {
+  images: string[];
+  videos: string[];
+}
+
 interface FeedPost {
   number: number;
   title: string;
@@ -25,6 +30,7 @@ interface FeedPost {
   category: string;
   labels: string[];
   slug: string;
+  media?: FeedPostMedia;
 }
 
 interface AuthorEntry {
@@ -177,6 +183,34 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         style={{ maxHeight }}
         className={`relative overflow-hidden ${expanded ? 'transition-all duration-500 ease-in-out' : ''}`}
       >
+        {post.media && post.media.images.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {post.media.images.slice(0, 4).map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt=""
+                loading="lazy"
+                className="rounded-lg object-cover w-full max-h-[490px]"
+                style={{ maxHeight: '490px' }}
+              />
+            ))}
+          </div>
+        )}
+        {post.media && post.media.videos.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {post.media.videos.slice(0, 2).map((src, i) => (
+              <video
+                key={i}
+                src={src}
+                controls
+                preload="none"
+                className="rounded-lg w-full"
+                style={{ maxHeight: '490px' }}
+              />
+            ))}
+          </div>
+        )}
         <div ref={contentRef}>
           <DocsBody>
             <MarkdownRenderer content={post.body} />
