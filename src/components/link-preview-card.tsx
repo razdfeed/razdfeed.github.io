@@ -12,8 +12,8 @@ export function LinkPreviewCard({ preview }: { preview: LinkPreview }) {
     >
       {preview.image && (
         <div
-          className="h-40 w-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${preview.image})` }}
+          className="w-full bg-cover bg-center"
+          style={{ backgroundImage: `url(${preview.image})`, aspectRatio: '16 / 9' }}
         />
       )}
       <div className="flex min-w-0 flex-col gap-1 px-4 py-3">
