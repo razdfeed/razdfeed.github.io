@@ -180,31 +180,32 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         </Link>
       )}
 
+      {post.media && post.media.images.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2">
+          {post.media.images.slice(0, 4).map((src, i) => (
+            <MediaImage key={i} src={src} />
+          ))}
+        </div>
+      )}
+      {post.media && post.media.videos.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2">
+          {post.media.videos.slice(0, 2).map((src, i) => (
+            <video
+              key={i}
+              src={src}
+              controls
+              preload="none"
+              className="rounded-lg w-full"
+              style={{ maxHeight: '490px' }}
+            />
+          ))}
+        </div>
+      )}
+
       <div
         style={{ maxHeight }}
         className={`relative overflow-hidden ${expanded ? 'transition-all duration-500 ease-in-out' : ''}`}
       >
-        {post.media && post.media.images.length > 0 && (
-          <div className="mb-4 flex flex-col gap-2">
-            {post.media.images.slice(0, 4).map((src, i) => (
-              <MediaImage key={i} src={src} />
-            ))}
-          </div>
-        )}
-        {post.media && post.media.videos.length > 0 && (
-          <div className="mb-4 flex flex-col gap-2">
-            {post.media.videos.slice(0, 2).map((src, i) => (
-              <video
-                key={i}
-                src={src}
-                controls
-                preload="none"
-                className="rounded-lg w-full"
-                style={{ maxHeight: '490px' }}
-              />
-            ))}
-          </div>
-        )}
         <div ref={contentRef}>
           <DocsBody>
             <MarkdownRenderer content={post.body} />
