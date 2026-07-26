@@ -7,6 +7,14 @@ export interface FeedPostMedia {
   videos: string[];
 }
 
+export interface LinkPreview {
+  url: string;
+  image: string | null;
+  siteName: string | null;
+  title: string | null;
+  description: string | null;
+}
+
 export interface FeedPost {
   number: number;
   title: string;
@@ -25,6 +33,7 @@ export interface FeedPost {
   labels: string[];
   slug: string;
   media?: FeedPostMedia;
+  linkPreview?: LinkPreview;
 }
 
 export interface AuthorEntry {

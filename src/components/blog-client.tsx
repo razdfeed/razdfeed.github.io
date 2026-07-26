@@ -15,6 +15,7 @@ import { extractTOC } from '@/lib/extract-toc';
 import { SkeletonCard, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
 import { GiscusComments, type GiscusConfig } from '@/components/giscus-comments';
 import { TelegramComments } from '@/components/telegram-comments';
+import { LinkPreviewCard } from '@/components/link-preview-card';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 import { MediaImage } from '@/components/media-image';
@@ -542,6 +543,9 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
                   <video key={i} src={src} controls preload="metadata" className="rounded-lg w-full" style={{ maxHeight: '490px' }} />
                 ))}
               </div>
+            )}
+            {post.linkPreview && (
+              <LinkPreviewCard preview={post.linkPreview} />
             )}
             <MarkdownRenderer content={post.body} />
           </DocsBody>

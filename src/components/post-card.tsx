@@ -8,10 +8,19 @@ import { DocsBody } from 'fumadocs-ui/layouts/docs/page';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 import { MediaImage } from '@/components/media-image';
+import { LinkPreviewCard } from '@/components/link-preview-card';
 
 interface FeedPostMedia {
   images: string[];
   videos: string[];
+}
+
+interface LinkPreview {
+  url: string;
+  image: string | null;
+  siteName: string | null;
+  title: string | null;
+  description: string | null;
 }
 
 interface FeedPost {
@@ -32,6 +41,7 @@ interface FeedPost {
   labels: string[];
   slug: string;
   media?: FeedPostMedia;
+  linkPreview?: LinkPreview;
 }
 
 interface AuthorEntry {
@@ -200,6 +210,10 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
               />
           ))}
         </div>
+      )}
+
+      {post.linkPreview && (
+        <LinkPreviewCard preview={post.linkPreview} />
       )}
 
       <div
