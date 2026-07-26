@@ -3,12 +3,16 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
+import { DocsPage, DocsBody, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
+import { TOCProvider, TOCPopover, TOC } from 'fumadocs-ui/layouts/docs/page/slots/toc';
 import { baseOptions } from '@/lib/layout.shared';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
 import { PostCard } from '@/components/post-card';
 import { SidebarNav } from '@/components/sidebar-nav';
-import { SiteAuthors } from '@/components/site-authors';
-import { SkeletonCard, SkeletonSiteAuthors, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
+import { HomeContainer } from '@/components/home-container';
+import { HomeTOC } from '@/components/home-toc';
+import { extractTOC } from '@/lib/extract-toc';
+import { SkeletonCard, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -110,83 +114,115 @@ export function HomePageClient() {
   if (loading) {
     console.debug('[HomePageClient] skeleton rendered');
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
-        <div className="flex gap-6">
-          <div className="hidden md:block shrink-0">
-            <SkeletonSidebar />
-          </div>
-          <div className="flex-1 min-w-0 space-y-6 w-full">
-            {[0, 1, 2].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-          <div className="hidden md:block shrink-0">
-            <SkeletonSiteAuthors />
-          </div>
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: true }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{
+          container: HomeContainer,
+          toc: {
+            provider: TOCProvider,
+            main: () => <HomeTOC authors={authors} />,
+            popover: TOCPopover,
+          },
+        }}
+      >
+        <div className="divide-y divide-fd-border">
+          {[0, 1, 2].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
-      </div>
+      </DocsPage>
     );
   }
 
   if (error && posts.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-        <p className="text-fd-muted-foreground">Не удалось загрузить ленту.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
-        >
-          Повторить
-        </button>
-      </div>
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
+        <div className="py-12 text-center">
+          <p className="text-fd-muted-foreground">Не удалось загрузить ленту.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
+          >
+            Повторить
+          </button>
+        </div>
+      </DocsPage>
     );
   }
 
   if (!loading && posts.length === 0 && !error) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-        <p className="text-fd-muted-foreground">Пока нет постов.</p>
-      </div>
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
+        <div className="py-12 text-center">
+          <p className="text-fd-muted-foreground">Пока нет постов.</p>
+        </div>
+      </DocsPage>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 animate-fd-fade-in">
-      <div className="flex gap-6">
-        <div className="hidden md:block shrink-0">
-          <SidebarNav />
-        </div>
-
-        <main className="flex-1 min-w-0 space-y-6">
-          {posts.map((post) => (
-            <PostCard
-              key={`${post.authorLogin}-${post.slug}`}
-              post={post}
-              author={findAuthor(authors, post.authorLogin)}
-            />
-          ))}
-
-          {loadingMore
-            ? [0, 1, 2].map((i) => <SkeletonCard key={`loading-more-${i}`} />)
-            : nextPage
-              ? (
-                  <div className="flex justify-center pt-4">
-                    <button
-                      onClick={loadMore}
-                      className="rounded-lg border bg-fd-card px-6 py-2.5 text-sm font-medium transition-colors hover:bg-fd-accent"
-                    >
-                      Показать ещё
-                    </button>
-                  </div>
-                )
-              : null}
-        </main>
-
-        <div className="hidden md:block shrink-0">
-          <SiteAuthors authors={authors} />
-        </div>
+    <DocsPage
+      full
+      breadcrumb={{ enabled: false }}
+      footer={{ enabled: false }}
+      tableOfContent={{ enabled: true }}
+      tableOfContentPopover={{ enabled: false }}
+      slots={{
+        container: HomeContainer,
+        toc: {
+          provider: TOCProvider,
+          main: () => <HomeTOC authors={authors} />,
+          popover: TOCPopover,
+        },
+      }}
+    >
+      <div className="divide-y divide-fd-border">
+        {posts.map((post) => (
+          <PostCard
+            key={`${post.authorLogin}-${post.slug}`}
+            post={post}
+            author={findAuthor(authors, post.authorLogin)}
+          />
+        ))}
       </div>
-    </div>
+
+      {loadingMore && (
+        <div className="divide-y divide-fd-border">
+          {[0, 1, 2].map((i) => (
+            <SkeletonCard key={`loading-more-${i}`} />
+          ))}
+        </div>
+      )}
+
+      {!loadingMore && nextPage && (
+        <div className="flex justify-center py-8">
+          <button
+            onClick={loadMore}
+            className="text-sm font-medium text-fd-primary transition-colors hover:text-fd-primary/80"
+          >
+            Показать ещё
+          </button>
+        </div>
+      )}
+    </DocsPage>
   );
 }
 
@@ -217,89 +253,84 @@ export function AuthorsPageClient() {
   if (loading) {
     console.debug('[AuthorsPageClient] skeleton rendered');
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
-        <div className="flex gap-6">
-          <div className="hidden md:block shrink-0">
-            <SkeletonSidebar />
-          </div>
-          <div className="flex-1 min-w-0 w-full">
-            <h1 className="text-2xl font-bold mb-6">Авторы</h1>
-            <div className="space-y-4">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <SkeletonAuthorRow key={i} />
-              ))}
-            </div>
-          </div>
-          <div className="hidden md:block shrink-0 md:w-80" />
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
+        <h1 className="text-[1.75em] font-semibold mb-6">Авторы</h1>
+        <div className="space-y-4">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <SkeletonAuthorRow key={i} />
+          ))}
         </div>
-      </div>
+      </DocsPage>
     );
   }
 
   if (error || authors.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
-        <div className="flex gap-6">
-          <div className="hidden md:block shrink-0">
-            <SkeletonSidebar />
-          </div>
-          <main className="flex-1 min-w-0 w-full text-center">
-            <h1 className="text-2xl font-bold mb-6">Авторы</h1>
-            <p className="text-fd-muted-foreground">
-              Не удалось загрузить список авторов.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
-            >
-              Повторить
-            </button>
-          </main>
-          <div className="hidden md:block shrink-0 md:w-80" />
-        </div>
-      </div>
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
+        <h1 className="text-[1.75em] font-semibold mb-6">Авторы</h1>
+        <p className="text-fd-muted-foreground">Не удалось загрузить список авторов.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
+        >
+          Повторить
+        </button>
+      </DocsPage>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 w-full">
-      <div className="flex gap-6">
-        <div className="hidden md:block shrink-0">
-          <SidebarNav />
-        </div>
-        <main className="flex-1 min-w-0 w-full">
-          <h1 className="text-2xl font-bold mb-2">Авторы</h1>
-          <p className="text-fd-muted-foreground mb-6">
-            Всего авторов: {authors.length}
-          </p>
-          <ul className="space-y-4">
-            {authors.map((a) => (
-              <li key={a.login} className="flex items-center gap-3">
-                {a.avatar && (
-                  <img
-                    src={a.avatar}
-                    alt={a.login}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                )}
-                <div>
-                  <Link href={`/${a.login}`} className="font-medium transition-colors hover:text-fd-primary">
-                    {a.name}
-                  </Link>
-                  <p className="text-sm text-fd-muted-foreground">
-                    {a.postCount} постов
-                    {a.description ? ` · ${a.description}` : ''}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </main>
-        <div className="hidden md:block shrink-0 md:w-80" />
-      </div>
-    </div>
+    <DocsPage
+      full
+      breadcrumb={{ enabled: false }}
+      footer={{ enabled: false }}
+      tableOfContent={{ enabled: false }}
+      tableOfContentPopover={{ enabled: false }}
+      slots={{ container: HomeContainer }}
+    >
+      <h1 className="text-[1.75em] font-semibold mb-2">Авторы</h1>
+      <p className="text-fd-muted-foreground mb-6">
+        Всего авторов: {authors.length}
+      </p>
+      <ul className="space-y-4">
+        {authors.map((a) => (
+          <li key={a.login} className="flex items-center gap-3">
+            {a.avatar && (
+              <img
+                src={a.avatar}
+                alt={a.login}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            )}
+            <div>
+              <Link href={`/${a.login}`} className="font-medium transition-colors hover:text-fd-primary">
+                {a.name}
+              </Link>
+              <p className="text-sm text-fd-muted-foreground">
+                {a.postCount} постов
+                {a.description ? ` · ${a.description}` : ''}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </DocsPage>
   );
 }
 
@@ -342,22 +373,36 @@ export function AuthorPageClient() {
   if (loading) {
     console.debug('[AuthorPageClient] skeleton rendered');
     return (
-      <HomeLayout {...baseOptions()}>
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
         <SkeletonAuthorPage />
-      </HomeLayout>
+      </DocsPage>
     );
   }
 
   if (notFound) {
     return (
-      <HomeLayout {...baseOptions()}>
-        <div className="mx-auto max-w-2xl px-4 py-12">
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
+        <div className="py-12">
           <p className="text-fd-muted-foreground">Автор не найден или блог не настроен.</p>
           <Link href="/" className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
             ← На главную
           </Link>
         </div>
-      </HomeLayout>
+      </DocsPage>
     );
   }
 
@@ -367,49 +412,56 @@ export function AuthorPageClient() {
   const htmlUrl = authorEntry?.htmlUrl ?? `https://github.com/${author}`;
 
   return (
-    <HomeLayout {...baseOptions()}>
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <header className="mb-12 flex items-center gap-4">
-          {avatar && (
-            <img src={avatar} alt={author} width={64} height={64} className="rounded-full" />
-          )}
-          <div>
-            <h1 className="text-2xl font-bold">{displayName}</h1>
-            {bio && <p className="text-fd-muted-foreground">{bio}</p>}
-            <a
-              href={htmlUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
-            >
-              @{author}
-            </a>
-          </div>
-        </header>
+    <DocsPage
+      full
+      breadcrumb={{ enabled: false }}
+      footer={{ enabled: false }}
+      tableOfContent={{ enabled: true }}
+      tableOfContentPopover={{ enabled: false }}
+      toc={[]}
+      slots={{
+        container: HomeContainer,
+        toc: {
+          provider: TOCProvider,
+          main: () => (
+            <div id="nd-toc" className="sticky top-(--fd-docs-row-1) h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] [grid-area:toc] w-(--fd-toc-width) pt-12 pe-4 pb-2 xl:layout:[--fd-toc-width:268px] max-xl:hidden" />
+          ),
+          popover: TOCPopover,
+        },
+      }}
+    >
+      <header className="mb-8 flex items-center gap-4 border-b pb-6">
+        {avatar && (
+          <img src={avatar} alt={author} width={64} height={64} className="rounded-full" />
+        )}
+        <div>
+          <DocsTitle>{displayName}</DocsTitle>
+          {bio && <p className="text-fd-muted-foreground">{bio}</p>}
+          <a
+            href={htmlUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+          >
+            @{author}
+          </a>
+        </div>
+      </header>
 
-        <section>
-          <h2 className="mb-6 text-lg font-semibold">
-            Посты <span className="text-fd-muted-foreground text-sm">({posts.length})</span>
-          </h2>
-          {posts.length === 0 ? (
-            <p className="text-fd-muted-foreground">Пока нет постов.</p>
-          ) : (
-            <ul className="space-y-6">
-              {posts.map((post) => (
-                <li key={post.number}>
-                  <Link href={`/${author}/${post.slug}`} className="group block">
-                    <h3 className="text-lg font-medium transition-colors group-hover:text-fd-primary">{post.title}</h3>
-                    <p className="mt-1 text-sm text-fd-muted-foreground">
-                      {formatDate(post.createdAt)}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <div className="divide-y divide-fd-border">
+        {posts.length === 0 ? (
+          <p className="py-6 text-fd-muted-foreground">Пока нет постов.</p>
+        ) : (
+          posts.map((post) => (
+            <PostCard
+              key={`${post.authorLogin}-${post.slug}`}
+              post={post}
+              author={authorEntry}
+            />
+          ))
+        )}
       </div>
-    </HomeLayout>
+    </DocsPage>
   );
 }
 
@@ -427,6 +479,7 @@ export function BlogPostClient() {
 
   const [post, setPost] = useState<FeedPost | null>(null);
   const [authorEntry, setAuthorEntry] = useState<AuthorEntry | null>(null);
+  const [authors, setAuthors] = useState<AuthorEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFoundPost, setNotFoundPost] = useState(false);
 
@@ -437,6 +490,7 @@ export function BlogPostClient() {
         fetchAuthors(),
         fetchAllPosts(),
       ]);
+      setAuthors(allAuthors);
       setAuthorEntry(findAuthor(allAuthors, author));
       const found = allPosts.find(
         (p) => p.authorLogin === author && p.slug === slug,
@@ -454,76 +508,99 @@ export function BlogPostClient() {
   if (loading) {
     console.debug('[BlogPostClient] skeleton rendered');
     return (
-      <HomeLayout {...baseOptions()}>
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
         <SkeletonBlogPost />
-      </HomeLayout>
+      </DocsPage>
     );
   }
 
   if (notFoundPost || !post) {
     return (
-      <HomeLayout {...baseOptions()}>
-        <div className="mx-auto max-w-3xl px-4 py-12">
+      <DocsPage
+        full
+        breadcrumb={{ enabled: false }}
+        footer={{ enabled: false }}
+        tableOfContent={{ enabled: false }}
+        tableOfContentPopover={{ enabled: false }}
+        slots={{ container: HomeContainer }}
+      >
+        <div className="py-12">
           <p className="text-fd-muted-foreground">Пост не найден.</p>
           <Link href={`/${author}`} className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
             ← {authorEntry?.name ?? author}
           </Link>
         </div>
-      </HomeLayout>
+      </DocsPage>
     );
   }
 
   return (
-    <HomeLayout {...baseOptions()}>
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <nav className="mb-8">
-          <Link href={`/${author}`} className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
-            ← {authorEntry?.name ?? post.authorName ?? author}
-          </Link>
-        </nav>
+    <DocsPage
+      full
+      breadcrumb={{ enabled: false }}
+      footer={{ enabled: false }}
+      tableOfContent={{ enabled: true }}
+      tableOfContentPopover={{ enabled: true }}
+      toc={extractTOC(post.body)}
+      slots={{
+        container: HomeContainer,
+        toc: {
+          provider: TOCProvider,
+          main: TOC,
+          popover: TOCPopover,
+        },
+      }}
+    >
+      <DocsTitle>{post.title}</DocsTitle>
 
-        <header className="mb-8 border-b pb-6">
-          <h1 className="text-3xl font-bold tracking-tight">{post.title}</h1>
-          <div className="mt-4 flex items-center gap-3">
-            {post.authorAvatar && (
-              <img
-                src={post.authorAvatar}
-                alt={author}
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
-            )}
-            <div className="text-sm text-fd-muted-foreground">
-              <a
-                href={authorEntry?.htmlUrl ?? `https://github.com/${author}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium transition-colors hover:text-fd-primary"
-              >
-                {post.authorName ?? author}
-              </a>
-              {' · '}
-              {formatDate(post.createdAt)}
-            </div>
-          </div>
-        </header>
-
-        <article className="prose prose-fd max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:rounded-lg prose-pre:bg-fd-muted/50 prose-img:rounded-lg">
-          <MarkdownRenderer content={post.body} />
-        </article>
-
-        <footer className="mt-12 border-t pt-6">
+      <div className="mb-4 flex items-center gap-3 border-b pb-6">
+        {post.authorAvatar && (
+          <img
+            src={post.authorAvatar}
+            alt={author}
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+        )}
+        <div className="text-sm text-fd-muted-foreground">
           <a
-            href={post.url}
+            href={authorEntry?.htmlUrl ?? `https://github.com/${author}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+            className="font-medium transition-colors hover:text-fd-primary"
           >
-            Обсудить на GitHub →
+            {post.authorName ?? author}
           </a>
-        </footer>
+          {' · '}
+          {formatDate(post.createdAt)}
+        </div>
       </div>
-    </HomeLayout>
+
+      <DocsBody>
+        <MarkdownRenderer content={post.body} />
+      </DocsBody>
+
+      <footer className="mt-12 border-t pt-6">
+        <Link href={`/${author}`} className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
+          ← {authorEntry?.name ?? post.authorName ?? author}
+        </Link>
+        <a
+          href={post.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 block text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+        >
+          Обсудить на GitHub →
+        </a>
+      </footer>
+    </DocsPage>
   );
 }

@@ -5,7 +5,7 @@ import { Newspaper, Users, Info, Shield } from 'lucide-react';
 export function SkeletonCard() {
   console.debug('[SkeletonCard] render');
   return (
-    <article className="rounded-lg border bg-fd-card p-4 shadow-sm min-h-[280px] w-full min-w-0">
+    <article className="py-6 w-full min-w-0">
       <header className="mb-3 flex items-center gap-3">
         <div className="h-9 w-9 rounded-full skeleton-shimmer shrink-0" />
         <div className="flex flex-col gap-1 min-w-0 flex-1">
@@ -19,28 +19,12 @@ export function SkeletonCard() {
       <div className="mb-4 aspect-video w-full overflow-hidden rounded-lg">
         <div className="h-full w-full skeleton-shimmer" />
       </div>
-      <div className="h-4 w-40 rounded skeleton-shimmer" />
+      <div className="space-y-2">
+        <div className="h-4 w-full rounded skeleton-shimmer" />
+        <div className="h-4 w-5/6 rounded skeleton-shimmer" />
+        <div className="h-4 w-4/5 rounded skeleton-shimmer" />
+      </div>
     </article>
-  );
-}
-
-export function SkeletonSiteAuthors() {
-  console.debug('[SkeletonSiteAuthors] render');
-  return (
-    <aside className="w-full rounded-lg border bg-fd-card p-4 shadow-sm md:w-80">
-      <div className="mb-4 h-4 w-1/2 rounded skeleton-shimmer" />
-      <ul className="flex flex-col gap-4">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <li key={i} className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-full skeleton-shimmer shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-full rounded skeleton-shimmer" />
-              <div className="h-3 w-2/3 rounded skeleton-shimmer" />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </aside>
   );
 }
 
