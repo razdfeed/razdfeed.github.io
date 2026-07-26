@@ -5,17 +5,28 @@ description: Как добавить свой блог в RazdFeed
 
 # Как подключить блог к RazdFeed
 
-RazdFeed собирает посты авторов из GitHub Issues и Discussions. Чтобы ваш блог появился в ленте, нужно создать в репозитории файл `.razdfeed.yml`.
+RazdFeed собирает посты авторов из GitHub Discussions. Чтобы ваш блог появился в ленте, нужно создать служебный репозиторий `{ваш-логин}/razdfeed` с файлом `.razdfeed.yml`.
 
 ## Как это работает
 
-1. Вы пишете посты как GitHub Issues (или Discussions) в своём репозитории.
-2. Бот [fetcher-collector](https://github.com/razdfeed/fetcher-collector) периодически забирает новые посты.
-3. RazdFeed показывает их в общей ленте и на странице автора.
+1. Вы пишете посты в виде GitHub Discussions в категории **Announcements** вашего основного репозитория (например, `dealenx/dealenx/discussions/categories/announcements`).
+2. Создаёте служебный репозиторий `dealenx/razdfeed` и добавляете в него файл `.razdfeed.yml`.
+3. Бот [fetcher-collector](https://github.com/razdfeed/fetcher-collector) находит этот файл, читает настройки и забирает посты.
+4. RazdFeed показывает их в общей ленте и на странице автора.
 
-## Файл `.razdfeed.yml`
+## Минимальная настройка
 
-Создайте файл в корне репозитория:
+Создайте репозиторий `{ваш-логин}/razdfeed` и файл `.razdfeed.yml` в его корне:
+
+```yaml
+name: Имя автора
+description: Короткое описание блога
+language: ru
+```
+
+По умолчанию бот возьмёт посты из `{ваш-логин}/{ваш-логин}/discussions/categories/Announcements`.
+
+## Параметры файла
 
 ```yaml
 name: Имя автора
@@ -28,20 +39,18 @@ source:
   repo: owner/repo
 ```
 
-Поля:
-
 - `name` — имя автора, которое отображается на сайте.
 - `description` — описание блога.
 - `language` — язык постов (`ru`, `en` и т.д.).
-- `category` — категория GitHub Discussions, из которой забирать посты.
+- `category` — категория GitHub Discussions для импорта (по умолчанию `Announcements`).
 - `labels` — метки issues/discussions, которые нужно импортировать.
-- `source.repo` — репозиторий, где находятся посты. Если не указан, используется репозиторий автора.
+- `source.repo` — репозиторий, где находятся посты. Если не указан, используется `{author}/{author}`.
 
 ## Требования
 
-- Репозиторий должен быть **публичным**.
-- Issues или Discussions должны быть включены в настройках репозитория.
-- Для комментариев через giscus нужно установить приложение [giscus](https://github.com/apps/giscus) и включить Discussions.
+- Служебный репозиторий `{author}/razdfeed` должен быть **публичным**.
+- В основном репозитории должны быть включены **Discussions**.
+- Для комментариев через giscus нужно установить приложение [giscus](https://github.com/apps/giscus) в основной репозиторий и включить Discussions.
 
 ## Подробнее
 
