@@ -1,50 +1,54 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTheme } from 'next-themes';
 
-interface GiscusCommentsProps {
+export interface GiscusConfig {
   repo: string;
   repoId: string;
   category: string;
   categoryId: string;
-  mapping?: 'pathname' | 'url' | 'title' | 'og:title' | 'number';
-  term?: string;
 }
 
-export function GiscusComments({
-  repo,
-  repoId,
-  category,
-  categoryId,
-  mapping = 'pathname',
-  term,
-}: GiscusCommentsProps) {
+interface GiscusCommentsProps {
+  config: GiscusConfig | null;
+  term: string;
+}
+
+function resolveGiscusTheme(theme?: string, resolvedTheme?: string): string {
+  if (theme === 'system' || (!theme && !resolvedTheme)) {
+    return 'preferred_color_scheme';
+  }
+  return resolvedTheme === 'dark' || theme === 'dark' ? 'dark' : 'light';
+}
+
+export function GiscusComments({ config, term }: GiscusCommentsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme, resolvedTheme } = useTheme();
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !config) return;
+
+    const giscusTheme = resolveGiscusTheme(theme, resolvedTheme);
 
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
-    script.setAttribute('data-repo', repo);
-    script.setAttribute('data-repo-id', repoId);
-    script.setAttribute('data-category', category);
-    script.setAttribute('data-category-id', categoryId);
-    script.setAttribute('data-mapping', mapping);
+    script.setAttribute('data-repo', config.repo);
+    script.setAttribute('data-repo-id', config.repoId);
+    script.setAttribute('data-category', config.category);
+    script.setAttribute('data-category-id', config.categoryId);
+    script.setAttribute('data-mapping', 'number');
+    script.setAttribute('data-term', term);
     script.setAttribute('data-strict', '0');
     script.setAttribute('data-reactions-enabled', '1');
     script.setAttribute('data-emit-metadata', '0');
     script.setAttribute('data-input-position', 'bottom');
-    script.setAttribute('data-theme', 'preferred_color_scheme');
+    script.setAttribute('data-theme', giscusTheme);
     script.setAttribute('data-lang', 'ru');
     script.setAttribute('crossorigin', 'anonymous');
     script.async = true;
-
-    if (term) {
-      script.setAttribute('data-term', term);
-    }
 
     containerRef.current.innerHTML = '';
     containerRef.current.appendChild(script);
@@ -64,7 +68,30 @@ export function GiscusComments({
         containerRef.current.innerHTML = '';
       }
     };
-  }, [repo, repoId, category, categoryId, mapping, term]);
+  }, [config, term, theme, resolvedTheme]);
+
+  if (!config) {
+    return (
+      <section className="mt-12 border-t pt-6">
+        <h3 className="mb-4 text-lg font-semibold">Комментарии</h3>
+        <div className="rounded-lg border bg-fd-secondary/50 p-4 text-sm text-fd-muted-foreground">
+          <p>Автор не настроил обсуждения для этого поста.</p>
+          <p className="mt-1">
+            Комментарии работают через{' '}
+            <a
+              href="https://giscus.app/ru"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-fd-primary transition-colors hover:text-fd-primary/80"
+            >
+              giscus
+            </a>
+            {' '}и GitHub Discussions.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-12 border-t pt-6">
@@ -73,16 +100,16 @@ export function GiscusComments({
         <div className="rounded-lg border bg-fd-secondary/50 p-4 text-sm text-fd-muted-foreground">
           <p>Автор не настроил обсуждения для этого поста.</p>
           <p className="mt-1">
-            Вы можете обсудить пост на{' '}
+            Комментарии работают через{' '}
             <a
-              href={`https://github.com/${repo}/discussions`}
+              href="https://giscus.app/ru"
               target="_blank"
               rel="noopener noreferrer"
               className="text-fd-primary transition-colors hover:text-fd-primary/80"
             >
-              GitHub
+              giscus
             </a>
-            .
+            {' '}и GitHub Discussions.
           </p>
         </div>
       )}
