@@ -1,13 +1,11 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import { LogoTitle } from '@/components/logo-title';
 import { appName, gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: (
-        <img src="/logo.png" alt="razdfeed" width={45} height={45} className="rounded" />
-      ),
+      title: <LogoTitle />,
     },
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }

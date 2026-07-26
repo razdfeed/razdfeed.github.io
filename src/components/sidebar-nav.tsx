@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Newspaper, Users, Info, Shield, Rss } from 'lucide-react';
 
 const items = [
-  { href: '/', label: 'Лента', icon: Rss },
+  { href: '/', label: 'Фид', icon: Rss },
   { href: '/authors', label: 'Авторы', icon: Users },
   { href: '/docs', label: 'О проекте', icon: Info },
   { href: '/docs/rules', label: 'Правила', icon: Shield },

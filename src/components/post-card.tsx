@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { extractPreviewImage, formatDate } from '@/lib/utils';
+import { extractPreviewImage, extractPlainText, formatDate } from '@/lib/utils';
+import { MarkdownRenderer } from '@/components/markdown-renderer';
 
 interface FeedPost {
   number: number;
@@ -34,7 +36,9 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, author }: PostCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const preview = extractPreviewImage(post.body);
+  const excerpt = extractPlainText(post.body, 180);
   const avatar = author?.avatar ?? post.authorAvatar;
   const name = author?.name ?? post.authorName ?? post.authorLogin;
   const profileUrl = author?.htmlUrl ?? post.authorUrl;
@@ -42,7 +46,7 @@ export function PostCard({ post, author }: PostCardProps) {
   console.debug('[PostCard] render:', post.slug, 'preview:', preview ? 'yes' : 'no');
 
   return (
-    <article className="rounded-lg border bg-fd-card p-4 shadow-sm transition-colors hover:bg-fd-accent/40 min-h-[280px]">
+    <article className="rounded-lg border bg-fd-card p-4 shadow-sm transition-colors hover:bg-fd-accent/40">
       <header className="mb-3 flex items-center gap-3">
         {avatar ? (
           <img
@@ -73,20 +77,41 @@ export function PostCard({ post, author }: PostCardProps) {
         <h2 className="mb-3 text-xl font-semibold leading-snug transition-colors group-hover:text-fd-primary line-clamp-2">
           {post.title}
         </h2>
+      </Link>
 
-        {preview ? (
-          <div className="mb-4 aspect-video w-full overflow-hidden rounded-lg">
-            <img
-              src={preview}
-              alt={post.title}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          </div>
+      {!expanded && preview ? (
+        <div className="mb-4 aspect-video w-full overflow-hidden rounded-lg">
+          <img
+            src={preview}
+            alt={post.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      ) : null}
+
+      <div className="space-y-4">
+        <div
+          className={
+            `overflow-hidden transition-all duration-500 ease-in-out ` +
+            (expanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0')
+          }
+        >
+          <article className="prose prose-fd max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:rounded-lg prose-pre:bg-fd-muted/50 prose-img:rounded-lg">
+            <MarkdownRenderer content={post.body} />
+          </article>
+        </div>
+
+        {!expanded && excerpt ? (
+          <p className="text-sm text-fd-muted-foreground line-clamp-3">{excerpt}</p>
         ) : null}
 
-        <div className="flex items-center text-sm text-fd-primary transition-colors hover:text-fd-primary/80">
-          Показать полностью
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
+        >
+          {expanded ? 'Скрыть' : 'Показать полностью'}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -97,12 +122,12 @@ export function PostCard({ post, author }: PostCardProps) {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="ml-1"
+            className={`ml-1 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
           >
             <path d="m6 9 6 6 6-6" />
           </svg>
-        </div>
-      </Link>
+        </button>
+      </div>
     </article>
   );
 }
