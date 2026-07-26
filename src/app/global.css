@@ -2,6 +2,27 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+@theme {
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility skeleton-shimmer {
+  background-image: linear-gradient(
+    to right,
+    var(--color-fd-muted) 0%,
+    color-mix(in srgb, var(--color-fd-muted) 60%, transparent) 50%,
+    var(--color-fd-muted) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: var(--animate-shimmer);
+}
+
 html {
   scrollbar-gutter: stable;
 }

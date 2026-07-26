@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AuthorPageClient, BlogPostClient } from '@/components/blog-client';
+import { SkeletonBlogPost } from '@/components/skeleton-card';
 
 function getPathSegments(): string[] {
   if (typeof window === 'undefined') return [];
@@ -18,11 +19,8 @@ export function DynamicRoute() {
   }, []);
 
   if (segments === null) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <p className="text-fd-muted-foreground">Загрузка…</p>
-      </div>
-    );
+    console.debug('[DynamicRoute] skeleton rendered (segments null)');
+    return <SkeletonBlogPost />;
   }
 
   if (segments.length <= 1) {

@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 import { baseOptions } from '@/lib/layout.shared';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { PostCard } from '@/components/post-card';
+import { SidebarNav } from '@/components/sidebar-nav';
+import { PopularPosts } from '@/components/popular-posts';
+import { SkeletonCard, SkeletonPopularPosts, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -95,6 +99,15 @@ async function fetchAllPosts(): Promise<FeedPost[]> {
   return all;
 }
 
+/** Fetch a single page of posts. Returns null on error. */
+async function fetchPostsPage(
+  path: string,
+): Promise<{ posts: FeedPost[]; nextPage: string | null } | null> {
+  const page = await fetchJson<PostsPage>(path);
+  if (!page) return null;
+  return { posts: page.posts, nextPage: page.nextPage };
+}
+
 async function fetchAuthors(): Promise<AuthorEntry[]> {
   const data = await fetchJson<AuthorsFile>('authors.json');
   return data?.authors ?? [];
@@ -122,108 +135,225 @@ function formatDate(iso: string): string {
   });
 }
 
-// ── Home page: all authors + latest posts feed ─────────────────────────────
+// ── Home page: three-column feed layout ───────────────────────────────────
 
 export function HomePageClient() {
   const [authors, setAuthors] = useState<AuthorEntry[]>([]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [nextPage, setNextPage] = useState<string | null>('posts-1.json');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const [a, p] = await Promise.all([fetchAuthors(), fetchAllPosts()]);
+      setLoading(true);
+      setError(false);
+      console.debug('[HomePageClient] initial load');
+      const [a, firstPage] = await Promise.all([
+        fetchAuthors(),
+        fetchPostsPage('posts-1.json'),
+      ]);
+      console.debug('[HomePageClient] authors loaded:', a.length);
+      if (firstPage) {
+        console.debug('[HomePageClient] posts loaded:', firstPage.posts.length);
+        setPosts(firstPage.posts);
+        setNextPage(firstPage.nextPage);
+      } else {
+        console.warn('[HomePageClient] fetch error: first page is null');
+        setError(true);
+      }
       setAuthors(a);
-      setPosts(p);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  async function loadMore() {
+    if (!nextPage || loadingMore) return;
+    setLoadingMore(true);
+    console.debug('[HomePageClient] loading more, nextPage:', nextPage);
+    const result = await fetchPostsPage(nextPage);
+    if (result) {
+      setPosts((prev) => [...prev, ...result.posts]);
+      setNextPage(result.nextPage);
+      console.debug('[HomePageClient] loaded more:', result.posts.length);
+    } else {
+      console.warn('[HomePageClient] fetch error: more page is null');
+      setNextPage(null);
+    }
+    setLoadingMore(false);
+  }
+
+  if (loading) {
+    console.debug('[HomePageClient] skeleton rendered');
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="flex gap-6">
+          <div className="hidden md:block shrink-0">
+            <SkeletonSidebar />
+          </div>
+          <div className="flex-1 min-w-0 space-y-6">
+            {[0, 1, 2].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+          <div className="hidden md:block shrink-0">
+            <SkeletonPopularPosts />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && posts.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12 text-center">
+        <p className="text-fd-muted-foreground">Не удалось загрузить ленту.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 text-sm text-fd-primary hover:underline"
+        >
+          Повторить
+        </button>
+      </div>
+    );
+  }
+
+  if (!loading && posts.length === 0 && !error) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12 text-center">
+        <p className="text-fd-muted-foreground">Пока нет постов.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 animate-fd-fade-in">
+      <div className="flex gap-6">
+        <div className="hidden md:block shrink-0">
+          <SidebarNav />
+        </div>
+
+        <main className="flex-1 min-w-0 space-y-6">
+          {posts.map((post) => (
+            <PostCard
+              key={`${post.authorLogin}-${post.slug}`}
+              post={post}
+              author={findAuthor(authors, post.authorLogin)}
+            />
+          ))}
+
+          {loadingMore
+            ? [0, 1, 2].map((i) => <SkeletonCard key={`loading-more-${i}`} />)
+            : nextPage
+              ? (
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={loadMore}
+                      className="rounded-lg border bg-fd-card px-6 py-2.5 text-sm font-medium transition-colors hover:bg-fd-accent"
+                    >
+                      Показать ещё
+                    </button>
+                  </div>
+                )
+              : null}
+        </main>
+
+        <div className="hidden md:block shrink-0">
+          <PopularPosts posts={posts} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Authors listing page ─────────────────────────────────────────────────────
+
+export function AuthorsPageClient() {
+  const [authors, setAuthors] = useState<AuthorEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      setError(false);
+      console.debug('[AuthorsPageClient] loading authors');
+      const a = await fetchAuthors();
+      console.debug('[AuthorsPageClient] authors loaded:', a.length);
+      if (a.length === 0) {
+        console.warn('[AuthorsPageClient] no authors returned');
+        setError(true);
+      }
+      setAuthors(a);
       setLoading(false);
     }
     load();
   }, []);
 
   if (loading) {
+    console.debug('[AuthorsPageClient] skeleton rendered');
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <p className="text-fd-muted-foreground">Загрузка…</p>
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <h1 className="text-2xl font-bold mb-6">Авторы</h1>
+        <div className="space-y-4">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <SkeletonAuthorRow key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error || authors.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold mb-6">Авторы</h1>
+        <p className="text-fd-muted-foreground">
+          Не удалось загрузить список авторов.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 text-sm text-fd-primary hover:underline"
+        >
+          Повторить
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-        <h1 className="text-3xl font-bold mb-2">razdfeed</h1>
-        <p className="text-fd-muted-foreground mb-8">
-          Агрегатор блогов на GitHub Discussions
-        </p>
-
-        <section className="mb-12">
-          <h2 className="text-lg font-semibold mb-4">
-            Авторы <span className="text-fd-muted-foreground text-sm">({authors.length})</span>
-          </h2>
-          {authors.length === 0 ? (
-            <p className="text-fd-muted-foreground">Пока нет авторов.</p>
-          ) : (
-            <ul className="space-y-4">
-              {authors.map((a) => (
-                <li key={a.login} className="flex items-center gap-3">
-                  {a.avatar && (
-                    <img
-                      src={a.avatar}
-                      alt={a.login}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                  )}
-                  <div>
-                    <Link href={`/${a.login}`} className="font-medium hover:underline">
-                      {a.name}
-                    </Link>
-                    <p className="text-sm text-fd-muted-foreground">
-                      {a.postCount} постов
-                      {a.description ? ` · ${a.description}` : ''}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Свежие посты</h2>
-          {posts.length === 0 ? (
-            <p className="text-fd-muted-foreground">Пока нет постов.</p>
-          ) : (
-            <ul className="space-y-5">
-              {posts.slice(0, 20).map((post) => (
-                <li key={`${post.authorLogin}-${post.slug}`}>
-                  <Link
-                    href={`/${post.authorLogin}/${post.slug}`}
-                    className="group block"
-                  >
-                    <h3 className="text-lg font-medium group-hover:underline">
-                      {post.title}
-                    </h3>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-fd-muted-foreground">
-                      {post.authorAvatar && (
-                        <img
-                          src={post.authorAvatar}
-                          alt=""
-                          width={18}
-                          height={18}
-                          className="rounded-full"
-                        />
-                      )}
-                      <span>{post.authorName ?? post.authorLogin}</span>
-                      <span>·</span>
-                      <span>{formatDate(post.createdAt)}</span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      <h1 className="text-2xl font-bold mb-2">Авторы</h1>
+      <p className="text-fd-muted-foreground mb-6">
+        Всего авторов: {authors.length}
+      </p>
+      <ul className="space-y-4">
+        {authors.map((a) => (
+          <li key={a.login} className="flex items-center gap-3">
+            {a.avatar && (
+              <img
+                src={a.avatar}
+                alt={a.login}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            )}
+            <div>
+              <Link href={`/${a.login}`} className="font-medium hover:underline">
+                {a.name}
+              </Link>
+              <p className="text-sm text-fd-muted-foreground">
+                {a.postCount} постов
+                {a.description ? ` · ${a.description}` : ''}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -264,11 +394,10 @@ export function AuthorPageClient() {
   }, [author]);
 
   if (loading) {
+    console.debug('[AuthorPageClient] skeleton rendered');
     return (
       <HomeLayout {...baseOptions()}>
-        <div className="mx-auto max-w-2xl px-4 py-12">
-          <p className="text-fd-muted-foreground">Загрузка…</p>
-        </div>
+        <SkeletonAuthorPage />
       </HomeLayout>
     );
   }
@@ -377,11 +506,10 @@ export function BlogPostClient() {
   }, [author, slug]);
 
   if (loading) {
+    console.debug('[BlogPostClient] skeleton rendered');
     return (
       <HomeLayout {...baseOptions()}>
-        <div className="mx-auto max-w-3xl px-4 py-12">
-          <p className="text-fd-muted-foreground">Загрузка…</p>
-        </div>
+        <SkeletonBlogPost />
       </HomeLayout>
     );
   }
