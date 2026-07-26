@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
@@ -34,12 +34,15 @@ interface AuthorEntry {
 interface PostCardProps {
   post: FeedPost;
   author?: AuthorEntry | null;
+  lazy?: boolean;
 }
 
-export function PostCard({ post, author }: PostCardProps) {
+export function PostCard({ post, author, lazy = false }: PostCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [previewHeight, setPreviewHeight] = useState(0);
   const [fullHeight, setFullHeight] = useState(0);
+  const [visible, setVisible] = useState(!lazy);
+  const [fadeIn, setFadeIn] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const avatar = author?.avatar ?? post.authorAvatar;
@@ -47,7 +50,23 @@ export function PostCard({ post, author }: PostCardProps) {
   const profileUrl = `/${post.authorLogin}`;
 
   useEffect(() => {
+    if (!lazy || visible) return;
+    const raf = requestAnimationFrame(() => {
+      setVisible(true);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [lazy, visible]);
+
+  useEffect(() => {
+    if (visible) {
+      const raf = requestAnimationFrame(() => setFadeIn(true));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [visible]);
+
+  useLayoutEffect(() => {
     if (!contentRef.current) return;
+    if (previewHeight > 0) return;
 
     const imgs = contentRef.current.querySelectorAll('img');
     const paragraphs = contentRef.current.querySelectorAll('p, h2, h3, ul, ol, blockquote, pre');
@@ -57,7 +76,12 @@ export function PostCard({ post, author }: PostCardProps) {
 
     if (imgs.length > 0) {
       const img = imgs[0];
-      imgHeight = img.offsetHeight + 16;
+      const imgRect = img.getBoundingClientRect();
+      if (imgRect.height > 0) {
+        imgHeight = imgRect.height + 16;
+      } else {
+        imgHeight = contentRef.current.offsetWidth * 0.5625 + 16;
+      }
     }
 
     if (paragraphs.length > 0) {
@@ -73,14 +97,35 @@ export function PostCard({ post, author }: PostCardProps) {
 
     setPreviewHeight(imgHeight + paraHeight);
     setFullHeight(contentRef.current.scrollHeight);
-  }, [post.body]);
+  }, [post.body, previewHeight, visible]);
+
+  useEffect(() => {
+    if (!contentRef.current || !expanded) return;
+    setFullHeight(contentRef.current.scrollHeight);
+  }, [expanded]);
 
   console.debug('[PostCard] render:', post.slug, 'previewHeight:', previewHeight, 'fullHeight:', fullHeight);
 
   const maxHeight = expanded ? (fullHeight || 'none') : (previewHeight || 0);
 
+  if (!visible) {
+    return (
+      <article className="py-6">
+        <header className="mb-3 flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full skeleton-shimmer shrink-0" />
+          <div className="flex flex-col gap-1">
+            <div className="h-4 w-32 rounded skeleton-shimmer" />
+            <div className="h-3 w-20 rounded skeleton-shimmer" />
+          </div>
+        </header>
+        <div className="mb-4 h-6 w-3/4 rounded skeleton-shimmer" />
+        <div className="aspect-video w-full rounded-lg skeleton-shimmer" />
+      </article>
+    );
+  }
+
   return (
-    <article className="py-6">
+    <article className={`py-6 transition-opacity duration-500 ease-in-out ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
       <header className="mb-3 flex items-center gap-3">
         {avatar ? (
           <img
@@ -113,7 +158,7 @@ export function PostCard({ post, author }: PostCardProps) {
 
       <div
         style={{ maxHeight }}
-        className="relative overflow-hidden transition-all duration-500 ease-in-out"
+        className={`relative overflow-hidden ${expanded ? 'transition-all duration-500 ease-in-out' : ''}`}
       >
         <div ref={contentRef}>
           <DocsBody>

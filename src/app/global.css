@@ -14,9 +14,9 @@
 @utility skeleton-shimmer {
   background-image: linear-gradient(
     to right,
-    var(--color-fd-muted) 0%,
-    color-mix(in srgb, var(--color-fd-muted) 60%, transparent) 50%,
-    var(--color-fd-muted) 100%
+    color-mix(in srgb, var(--color-fd-muted) 80%, transparent) 0%,
+    color-mix(in srgb, var(--color-fd-muted) 100%, transparent) 50%,
+    color-mix(in srgb, var(--color-fd-muted) 80%, transparent) 100%
   );
   background-size: 200% 100%;
   background-repeat: no-repeat;

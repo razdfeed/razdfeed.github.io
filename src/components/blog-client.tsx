@@ -130,9 +130,7 @@ export function HomePageClient() {
         }}
       >
         <div className="divide-y divide-fd-border">
-          {[0, 1, 2].map((i) => (
-            <SkeletonCard key={i} />
-          ))}
+          <SkeletonCard />
         </div>
       </DocsPage>
     );
@@ -195,11 +193,12 @@ export function HomePageClient() {
       }}
     >
       <div className="divide-y divide-fd-border">
-        {posts.map((post) => (
+        {posts.map((post, i) => (
           <PostCard
             key={`${post.authorLogin}-${post.slug}`}
             post={post}
             author={findAuthor(authors, post.authorLogin)}
+            lazy={i > 0}
           />
         ))}
       </div>
@@ -571,14 +570,12 @@ export function BlogPostClient() {
           />
         )}
         <div className="text-sm text-fd-muted-foreground">
-          <a
-            href={authorEntry?.htmlUrl ?? `https://github.com/${author}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={`/${author}`}
             className="font-medium transition-colors hover:text-fd-primary"
           >
             {post.authorName ?? author}
-          </a>
+          </Link>
           {' · '}
           {formatDate(post.createdAt)}
         </div>
