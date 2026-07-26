@@ -13,6 +13,7 @@ import { HomeContainer } from '@/components/home-container';
 import { HomeTOC } from '@/components/home-toc';
 import { extractTOC } from '@/lib/extract-toc';
 import { SkeletonCard, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
+import { GiscusComments } from '@/components/giscus-comments';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -503,6 +504,15 @@ export function BlogPostClient() {
               Обсудить на GitHub →
             </a>
           </footer>
+
+          <GiscusComments
+            repo="dealenx/dealenx"
+            repoId="337669556"
+            category="Announcements"
+            categoryId="DIC_kwDOFCBttM4DB8Gh"
+            mapping="number"
+            term={post.number.toString()}
+          />
         </>
       )}
     </DocsPage>
