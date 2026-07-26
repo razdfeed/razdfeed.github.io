@@ -89,7 +89,7 @@ export function SkeletonAuthorPage() {
 export function SkeletonBlogPost() {
   console.debug('[SkeletonBlogPost] render');
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <div className="w-full py-12">
       <div className="mb-8 h-4 w-32 rounded skeleton-shimmer" />
       <header className="mb-8 border-b pb-6">
         <div className="h-9 w-3/4 rounded skeleton-shimmer" />
