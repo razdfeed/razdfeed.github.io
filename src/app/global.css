@@ -12,11 +12,12 @@
 }
 
 @utility skeleton-shimmer {
+  background-color: rgba(17, 17, 17, 0.08);
   background-image: linear-gradient(
     to right,
-    color-mix(in srgb, var(--color-fd-muted) 80%, transparent) 0%,
-    color-mix(in srgb, var(--color-fd-muted) 100%, transparent) 50%,
-    color-mix(in srgb, var(--color-fd-muted) 80%, transparent) 100%
+    rgba(17, 17, 17, 0.08) 0%,
+    rgba(17, 17, 17, 0.15) 50%,
+    rgba(17, 17, 17, 0.08) 100%
   );
   background-size: 200% 100%;
   background-repeat: no-repeat;

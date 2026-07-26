@@ -110,7 +110,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
 
   if (!visible) {
     return (
-      <article className="py-6">
+      <article className="py-6 w-full min-w-0">
         <header className="mb-3 flex items-center gap-3">
           <div className="h-9 w-9 rounded-full skeleton-shimmer shrink-0" />
           <div className="flex flex-col gap-1">
@@ -171,7 +171,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-4 flex items-center text-sm font-semibold text-fd-primary transition-colors hover:text-fd-primary/80"
+          className="mt-4 flex cursor-pointer items-center text-sm font-semibold text-fd-primary transition-colors hover:text-fd-primary/80"
         >
           Показать полностью
           <svg

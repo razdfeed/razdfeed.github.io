@@ -30,13 +30,13 @@ function SkeletonImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
 
   return (
     <>
-      <span className="relative block overflow-hidden rounded-lg">
+      <span className="relative block w-full min-w-full overflow-hidden rounded-lg">
         {!loaded && (
-          <span className="skeleton-shimmer aspect-video absolute inset-0" />
+          <span className="skeleton-shimmer aspect-video absolute inset-0 w-full min-w-full" />
         )}
         <img
           {...props}
-          className={`relative rounded-lg cursor-zoom-in transition-opacity duration-500 ease-in-out ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`relative w-full rounded-lg cursor-zoom-in transition-opacity duration-500 ease-in-out ${loaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
           onLoad={() => setLoaded(true)}
           onClick={() => setZoomed(true)}
