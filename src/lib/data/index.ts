@@ -15,6 +15,7 @@ export interface FeedPost {
   authorLogin: string;
   authorName: string | null;
   sourceRepo: string;
+  sourceType: 'github' | 'telegram' | string;
   category: string;
   labels: string[];
   slug: string;
