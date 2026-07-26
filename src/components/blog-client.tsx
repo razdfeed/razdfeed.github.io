@@ -545,9 +545,10 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
             </a>
           </footer>
 
-          <GiscusComments config={giscusConfig ?? null} term={post.number.toString()} />
-          {post.sourceType === 'telegram' && post.author && (
+          {post.sourceType === 'telegram' ? (
             <TelegramComments channel={post.author} postId={post.number} />
+          ) : (
+            <GiscusComments config={giscusConfig ?? null} term={post.number.toString()} />
           )}
         </>
       )}
