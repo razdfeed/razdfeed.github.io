@@ -101,7 +101,7 @@ export function HomeDocsLayout({ tree: _tree, baseOptions, children }: HomeDocsL
         tree={emptyTree}
         {...baseOptions}
         links={navLinks}
-        nav={{ ...baseOptions.nav, enabled: true, visible: true, title: <LogoTitle /> }}
+        nav={{ ...baseOptions.nav, enabled: true, title: <LogoTitle /> }}
         sidebar={{ enabled: true, collapsible: true, footer: null, banner: null }}
         themeSwitch={{ enabled: true, mode: 'light-dark-system' }}
       >
