@@ -56,8 +56,12 @@ function getPathSegments(): string[] {
 
 function formatDate(iso: string): string {
   if (!iso) return '';
-  return new Date(iso).toLocaleDateString('ru-RU', {
-    year: 'numeric',
+  const date = new Date(iso);
+  const now = new Date();
+  const isCurrentYear = date.getFullYear() === now.getFullYear();
+
+  return date.toLocaleDateString('ru-RU', {
+    year: isCurrentYear ? undefined : 'numeric',
     month: 'long',
     day: 'numeric',
   });

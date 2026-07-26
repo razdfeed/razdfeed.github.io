@@ -3,7 +3,7 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { BaseLayoutProps, LinkItemType } from 'fumadocs-ui/layouts/shared';
 import type { Root as PageTreeRoot } from 'fumadocs-core/page-tree';
-import { Users, Rss } from 'lucide-react';
+import { Users, Rss, Plug } from 'lucide-react';
 
 interface HomeDocsLayoutProps {
   tree: PageTreeRoot;
@@ -25,6 +25,14 @@ const navLinks: LinkItemType[] = [
     url: '/authors',
     text: 'Авторы',
     icon: <Users size={16} />,
+    on: 'menu',
+    active: 'url',
+  },
+  {
+    type: 'main',
+    url: '/docs/connect',
+    text: 'Как подключиться?',
+    icon: <Plug size={16} />,
     on: 'menu',
     active: 'url',
   },
