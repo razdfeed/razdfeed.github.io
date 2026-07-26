@@ -16,6 +16,7 @@ import { SkeletonCard, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, S
 import { GiscusComments, type GiscusConfig } from '@/components/giscus-comments';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
+import { MediaImage } from '@/components/media-image';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -513,9 +514,9 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
 
           <DocsBody>
             {post.media && post.media.images.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-4 flex flex-col gap-2">
                 {post.media.images.map((src, i) => (
-                  <img key={i} src={src} alt="" loading="lazy" className="rounded-lg object-cover w-full" style={{ maxHeight: '490px' }} />
+                  <MediaImage key={i} src={src} />
                 ))}
               </div>
             )}

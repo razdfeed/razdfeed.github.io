@@ -7,6 +7,7 @@ import { MarkdownRenderer } from '@/components/markdown-renderer';
 import { DocsBody } from 'fumadocs-ui/layouts/docs/page';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
+import { MediaImage } from '@/components/media-image';
 
 interface FeedPostMedia {
   images: string[];
@@ -184,21 +185,14 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         className={`relative overflow-hidden ${expanded ? 'transition-all duration-500 ease-in-out' : ''}`}
       >
         {post.media && post.media.images.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-col gap-2">
             {post.media.images.slice(0, 4).map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                alt=""
-                loading="lazy"
-                className="rounded-lg object-cover w-full max-h-[490px]"
-                style={{ maxHeight: '490px' }}
-              />
+              <MediaImage key={i} src={src} />
             ))}
           </div>
         )}
         {post.media && post.media.videos.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-col gap-2">
             {post.media.videos.slice(0, 2).map((src, i) => (
               <video
                 key={i}
