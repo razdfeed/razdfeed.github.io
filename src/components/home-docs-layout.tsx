@@ -43,6 +43,7 @@ export function HomeDocsLayout({ tree: _tree, baseOptions, children }: HomeDocsL
       links={navLinks}
       nav={{ ...baseOptions.nav, enabled: false }}
       sidebar={{ enabled: true, collapsible: true, footer: null, banner: null }}
+      themeSwitch={{ enabled: true, mode: 'light-dark-system' }}
     >
       {children}
     </DocsLayout>

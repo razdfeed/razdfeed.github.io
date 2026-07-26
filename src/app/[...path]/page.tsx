@@ -24,11 +24,11 @@ export async function generateStaticParams() {
   return paths;
 }
 
-interface PageProps {
+interface PathPageProps {
   params: Promise<{ path?: string[] }>;
 }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params }: PathPageProps) {
   const { path } = await params;
   return <DynamicRoute segments={path ?? []} />;
 }

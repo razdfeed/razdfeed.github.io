@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, Rss, Users, Info, Shield } from 'lucide-react';
 import { SearchTrigger } from 'fumadocs-ui/layouts/shared/slots/search-trigger';
-import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 
 const items = [
@@ -74,7 +73,7 @@ export function HomeSidebar() {
       </nav>
 
       <div className="mt-auto flex items-center justify-between border-t pt-2">
-        <ThemeSwitch mode="light-dark-system" />
+        <SearchTrigger />
       </div>
     </aside>
   );
