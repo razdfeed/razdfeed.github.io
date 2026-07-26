@@ -29,12 +29,7 @@ jobs:
         run: bun run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Fetch blog data
-        run: bun run scripts/fetch-data.ts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AUTHORS: dealenx
+          NEXT_PUBLIC_DATA_BASE: https://razdfeed.github.io/fetcher-collector/public/data
 
       - name: Create SPA fallback
         run: |
