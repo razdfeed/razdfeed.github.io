@@ -122,52 +122,6 @@ function formatDate(iso: string): string {
   });
 }
 
-function cleanGitHubHtml(html: string): string {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-
-  tmp.querySelectorAll('a').forEach((el) => {
-    const href = el.getAttribute('href') ?? '';
-    if (href.startsWith('https://private-user-images.githubusercontent.com/')) {
-      const img = el.querySelector('img');
-      if (img) {
-        const src = img.getAttribute('src') ?? '';
-        const alt = img.getAttribute('alt') ?? '';
-        el.outerHTML = `<img src="${src}" alt="${alt}" />`;
-      }
-    }
-  });
-
-  tmp.querySelectorAll('img').forEach((el) => {
-    el.removeAttribute('width');
-    el.removeAttribute('height');
-    el.removeAttribute('style');
-    el.removeAttribute('class');
-  });
-
-  tmp.querySelectorAll('div.highlight').forEach((el) => {
-    const pre = el.querySelector('pre');
-    if (pre) {
-      const code = pre.textContent ?? '';
-      const lang = el.className.match(/highlight-source-(\w+)/)?.[1] ?? 'text';
-      el.outerHTML = `\n\`\`\`${lang}\n${code.replace(/\n$/, '')}\n\`\`\`\n`;
-    }
-  });
-
-  tmp.querySelectorAll('.snippet-clipboard-content').forEach((el) => {
-    const code = el.querySelector('code');
-    if (code) {
-      const text = code.textContent ?? '';
-      el.outerHTML = `\n\`\`\`\n${text.replace(/\n$/, '')}\n\`\`\`\n`;
-    }
-  });
-
-  tmp.querySelectorAll('[dir]').forEach((el) => el.removeAttribute('dir'));
-  tmp.querySelectorAll('.js-gh-image-fallback').forEach((el) => el.remove());
-
-  return tmp.innerHTML;
-}
-
 // ── Home page: all authors + latest posts feed ─────────────────────────────
 
 export function HomePageClient() {
@@ -187,17 +141,14 @@ export function HomePageClient() {
 
   if (loading) {
     return (
-      <HomeLayout {...baseOptions()}>
-        <div className="mx-auto max-w-2xl px-4 py-12">
-          <p className="text-fd-muted-foreground">Загрузка…</p>
-        </div>
-      </HomeLayout>
+      <div className="mx-auto max-w-2xl px-4 py-12">
+        <p className="text-fd-muted-foreground">Загрузка…</p>
+      </div>
     );
   }
 
   return (
-    <HomeLayout {...baseOptions()}>
-      <div className="mx-auto max-w-2xl px-4 py-12">
+    <div className="mx-auto max-w-2xl px-4 py-12">
         <h1 className="text-3xl font-bold mb-2">razdfeed</h1>
         <p className="text-fd-muted-foreground mb-8">
           Агрегатор блогов на GitHub Discussions
@@ -273,7 +224,6 @@ export function HomePageClient() {
           )}
         </section>
       </div>
-    </HomeLayout>
   );
 }
 

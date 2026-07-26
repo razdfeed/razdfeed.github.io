@@ -5,10 +5,7 @@ export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
       title: (
-        <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="razdfeed" width={24} height={24} />
-          <span>{appName}</span>
-        </div>
+        <img src="/logo.png" alt="razdfeed" width={45} height={45} className="rounded" />
       ),
     },
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
