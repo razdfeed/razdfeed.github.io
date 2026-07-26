@@ -493,6 +493,7 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
               </Link>
               {' · '}
               {formatDate(post.createdAt)}
+              {' · '}
               <SourcePopup repo={post.sourceRepo || `/${author}`} />
             </div>
           </div>

@@ -27,7 +27,7 @@ export function SourcePopup({ repo }: SourcePopupProps) {
         type="button"
         title="Опубликовано через GitHub"
         onClick={() => setOpen(true)}
-        className="ms-0.5 inline-flex cursor-pointer items-center"
+        className="inline-flex cursor-pointer items-center"
       >
         <svg
           viewBox="0 0 24 24"
