@@ -523,7 +523,7 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
             {post.media && post.media.videos.length > 0 && (
               <div className="mb-4 flex flex-wrap gap-2">
                 {post.media.videos.map((src, i) => (
-                  <video key={i} src={src} controls preload="none" className="rounded-lg w-full" style={{ maxHeight: '490px' }} />
+                  <video key={i} src={src} controls preload="metadata" className="rounded-lg w-full" style={{ maxHeight: '490px' }} />
                 ))}
               </div>
             )}

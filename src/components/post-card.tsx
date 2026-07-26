@@ -190,14 +190,14 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
       {post.media && post.media.videos.length > 0 && (
         <div className="mb-4 flex flex-col gap-2">
           {post.media.videos.slice(0, 2).map((src, i) => (
-            <video
-              key={i}
-              src={src}
-              controls
-              preload="none"
-              className="rounded-lg w-full"
-              style={{ maxHeight: '490px' }}
-            />
+              <video
+                key={i}
+                src={src}
+                controls
+                preload="metadata"
+                className="rounded-lg w-full"
+                style={{ maxHeight: '490px' }}
+              />
           ))}
         </div>
       )}
