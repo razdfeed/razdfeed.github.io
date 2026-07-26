@@ -149,7 +149,12 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
             {name}
           </Link>
           <span className="text-xs text-fd-muted-foreground inline-flex items-center gap-1">
-            {formatDate(post.createdAt)}
+            <Link
+              href={`/${post.authorLogin}/${post.slug}`}
+              className="transition-colors hover:text-fd-primary"
+            >
+              {formatDate(post.createdAt)}
+            </Link>
             {post.sourceType === 'telegram' ? (
               <a
                 href={post.authorUrl || post.url}
