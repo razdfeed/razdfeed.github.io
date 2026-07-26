@@ -4,6 +4,7 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { BaseLayoutProps, LinkItemType } from 'fumadocs-ui/layouts/shared';
 import type { Root as PageTreeRoot } from 'fumadocs-core/page-tree';
 import { Users, Rss, Plug } from 'lucide-react';
+import { LogoTitle } from '@/components/logo-title';
 
 interface HomeDocsLayoutProps {
   tree: PageTreeRoot;
@@ -49,7 +50,7 @@ export function HomeDocsLayout({ tree: _tree, baseOptions, children }: HomeDocsL
       tree={emptyTree}
       {...baseOptions}
       links={navLinks}
-      nav={{ ...baseOptions.nav, enabled: false }}
+      nav={{ ...baseOptions.nav, enabled: true, visible: true, title: <LogoTitle /> }}
       sidebar={{ enabled: true, collapsible: true, footer: null, banner: null }}
       themeSwitch={{ enabled: true, mode: 'light-dark-system' }}
     >
