@@ -304,6 +304,7 @@ export function AuthorPageClient() {
   const [authorEntry, setAuthorEntry] = useState<AuthorEntry | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [notFound, setNotFound] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (!author) return;
@@ -320,6 +321,7 @@ export function AuthorPageClient() {
         setAuthorEntry(entry);
         setPosts(authorPosts);
       }
+      setChecked(true);
     }
     load();
   }, [author]);
@@ -346,7 +348,7 @@ export function AuthorPageClient() {
         },
       }}
     >
-      {notFound ? (
+      {!checked ? null : notFound ? (
         <div className="py-12">
           <p className="text-fd-muted-foreground">Автор не найден или блог не настроен.</p>
           <Link href="/" className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
