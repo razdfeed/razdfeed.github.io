@@ -2,6 +2,11 @@ const DATA_BASE =
   process.env.NEXT_PUBLIC_DATA_BASE ??
   'https://razdfeed.github.io/fetcher-collector/public/data';
 
+export interface FeedPostMedia {
+  images: string[];
+  videos: string[];
+}
+
 export interface FeedPost {
   number: number;
   title: string;
@@ -19,6 +24,7 @@ export interface FeedPost {
   category: string;
   labels: string[];
   slug: string;
+  media?: FeedPostMedia;
 }
 
 export interface AuthorEntry {
