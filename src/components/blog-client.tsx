@@ -15,6 +15,7 @@ import { extractTOC } from '@/lib/extract-toc';
 import { SkeletonCard, SkeletonSidebar, SkeletonAuthorRow, SkeletonAuthorPage, SkeletonBlogPost } from '@/components/skeleton-card';
 import { GiscusComments, type GiscusConfig } from '@/components/giscus-comments';
 import { SourcePopup } from '@/components/source-popup';
+import { TelegramIcon } from '@/components/telegram-icon';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -502,7 +503,11 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
               {' · '}
               {formatDate(post.createdAt)}
               {' · '}
-              <SourcePopup repo={post.sourceRepo || `/${author}`} />
+              {post.sourceType === 'telegram' ? (
+                <TelegramIcon url={post.authorUrl || post.url} />
+              ) : (
+                <SourcePopup repo={post.sourceRepo || `/${author}`} />
+              )}
             </div>
           </div>
 
@@ -520,7 +525,7 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
               rel="noopener noreferrer"
               className="mt-2 block text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
             >
-              Обсудить на GitHub →
+              {post.sourceType === 'telegram' ? 'Открыть в Telegram →' : 'Обсудить на GitHub →'}
             </a>
           </footer>
 
