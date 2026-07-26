@@ -10,8 +10,8 @@ export function LogoTitle() {
     <img
       src="/logo.png"
       alt="razdfeed"
-      width={45}
-      height={45}
+      width={54}
+      height={54}
       onClick={() => {
         if (pathname === '/') {
           window.location.reload();

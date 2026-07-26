@@ -74,7 +74,7 @@ export function HomeSidebar() {
       </nav>
 
       <div className="mt-auto flex items-center justify-between border-t pt-2">
-        <ThemeSwitch />
+        <ThemeSwitch mode="light-dark-system" />
       </div>
     </aside>
   );
