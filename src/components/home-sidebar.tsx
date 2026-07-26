@@ -9,7 +9,7 @@ import { useSearchContext } from 'fumadocs-ui/contexts/search';
 const items = [
   { href: '/', label: 'Фид', icon: Rss },
   { href: '/authors', label: 'Авторы', icon: Users },
-  { href: '/docs/connect', label: 'Как публиковать?', icon: PenLine },
+  { href: '/docs/connect', label: 'Как подключиться?', icon: PenLine },
   { href: '/docs/rules', label: 'Правила', icon: Shield },
 ];
 
