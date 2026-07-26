@@ -310,6 +310,7 @@ function EmptyTOC() {
 }
 
 export function AuthorPageClient() {
+  const PAGE_SIZE = 15;
   const [segments, setSegments] = useState<string[]>(getPathSegments());
 
   useEffect(() => {
@@ -320,6 +321,7 @@ export function AuthorPageClient() {
 
   const [authorEntry, setAuthorEntry] = useState<AuthorEntry | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [notFound, setNotFound] = useState(false);
   const [checked, setChecked] = useState(false);
 
@@ -342,6 +344,8 @@ export function AuthorPageClient() {
     }
     load();
   }, [author]);
+
+  const hasMore = visibleCount < posts.length;
 
   const avatar = authorEntry?.avatar ?? posts[0]?.authorAvatar ?? '';
   const displayName = authorEntry?.name ?? posts[0]?.authorName ?? author;
@@ -396,7 +400,7 @@ export function AuthorPageClient() {
             {posts.length === 0 ? (
               <p className="py-6 text-fd-muted-foreground">Пока нет постов.</p>
             ) : (
-              posts.map((post) => (
+              posts.slice(0, visibleCount).map((post) => (
                 <PostCard
                   key={`${post.authorLogin}-${post.slug}`}
                   post={post}
@@ -405,6 +409,17 @@ export function AuthorPageClient() {
               ))
             )}
           </div>
+
+          {hasMore && (
+            <div className="flex justify-center py-8">
+              <button
+                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                className="cursor-pointer rounded-lg border border-fd-border bg-fd-secondary px-6 py-2.5 text-sm font-medium text-fd-foreground shadow-sm transition-all duration-200 hover:bg-fd-accent hover:text-fd-accent-foreground hover:shadow-md active:scale-95 active:bg-fd-accent"
+              >
+                Показать ещё
+              </button>
+            </div>
+          )}
         </>
       )}
     </DocsPage>
