@@ -62,7 +62,7 @@ export function PopularPosts({ posts, limit = 5 }: PopularPostsProps) {
                   <div className="h-8 w-8 rounded-full bg-fd-muted" />
                 )}
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium leading-snug group-hover:underline line-clamp-2">
+                  <h4 className="text-sm font-medium leading-snug transition-colors group-hover:text-fd-primary line-clamp-2">
                     {post.title}
                   </h4>
                   {excerpt ? (

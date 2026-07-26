@@ -188,12 +188,12 @@ export function HomePageClient() {
   if (loading) {
     console.debug('[HomePageClient] skeleton rendered');
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
         <div className="flex gap-6">
           <div className="hidden md:block shrink-0">
             <SkeletonSidebar />
           </div>
-          <div className="flex-1 min-w-0 space-y-6">
+          <div className="flex-1 min-w-0 space-y-6 w-full">
             {[0, 1, 2].map((i) => (
               <SkeletonCard key={i} />
             ))}
@@ -212,7 +212,7 @@ export function HomePageClient() {
         <p className="text-fd-muted-foreground">Не удалось загрузить ленту.</p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 text-sm text-fd-primary hover:underline"
+          className="mt-4 text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
         >
           Повторить
         </button>
@@ -295,12 +295,20 @@ export function AuthorsPageClient() {
   if (loading) {
     console.debug('[AuthorsPageClient] skeleton rendered');
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="text-2xl font-bold mb-6">Авторы</h1>
-        <div className="space-y-4">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <SkeletonAuthorRow key={i} />
-          ))}
+      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
+        <div className="flex gap-6">
+          <div className="hidden md:block shrink-0">
+            <SkeletonSidebar />
+          </div>
+          <div className="flex-1 min-w-0 w-full">
+            <h1 className="text-2xl font-bold mb-6">Авторы</h1>
+            <div className="space-y-4">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <SkeletonAuthorRow key={i} />
+              ))}
+            </div>
+          </div>
+          <div className="hidden md:block shrink-0 md:w-80" />
         </div>
       </div>
     );
@@ -308,51 +316,67 @@ export function AuthorsPageClient() {
 
   if (error || authors.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold mb-6">Авторы</h1>
-        <p className="text-fd-muted-foreground">
-          Не удалось загрузить список авторов.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 text-sm text-fd-primary hover:underline"
-        >
-          Повторить
-        </button>
+      <div className="mx-auto max-w-7xl px-4 py-8 w-full">
+        <div className="flex gap-6">
+          <div className="hidden md:block shrink-0">
+            <SkeletonSidebar />
+          </div>
+          <main className="flex-1 min-w-0 w-full text-center">
+            <h1 className="text-2xl font-bold mb-6">Авторы</h1>
+            <p className="text-fd-muted-foreground">
+              Не удалось загрузить список авторов.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 text-sm text-fd-primary transition-colors hover:text-fd-primary/80"
+            >
+              Повторить
+            </button>
+          </main>
+          <div className="hidden md:block shrink-0 md:w-80" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-2">Авторы</h1>
-      <p className="text-fd-muted-foreground mb-6">
-        Всего авторов: {authors.length}
-      </p>
-      <ul className="space-y-4">
-        {authors.map((a) => (
-          <li key={a.login} className="flex items-center gap-3">
-            {a.avatar && (
-              <img
-                src={a.avatar}
-                alt={a.login}
-                width={40}
-                height={40}
-                className="rounded-full"
-              />
-            )}
-            <div>
-              <Link href={`/${a.login}`} className="font-medium hover:underline">
-                {a.name}
-              </Link>
-              <p className="text-sm text-fd-muted-foreground">
-                {a.postCount} постов
-                {a.description ? ` · ${a.description}` : ''}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="mx-auto max-w-7xl px-4 py-8 w-full">
+      <div className="flex gap-6">
+        <div className="hidden md:block shrink-0">
+          <SidebarNav />
+        </div>
+        <main className="flex-1 min-w-0 w-full">
+          <h1 className="text-2xl font-bold mb-2">Авторы</h1>
+          <p className="text-fd-muted-foreground mb-6">
+            Всего авторов: {authors.length}
+          </p>
+          <ul className="space-y-4">
+            {authors.map((a) => (
+              <li key={a.login} className="flex items-center gap-3">
+                {a.avatar && (
+                  <img
+                    src={a.avatar}
+                    alt={a.login}
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
+                )}
+                <div>
+                  <Link href={`/${a.login}`} className="font-medium transition-colors hover:text-fd-primary">
+                    {a.name}
+                  </Link>
+                  <p className="text-sm text-fd-muted-foreground">
+                    {a.postCount} постов
+                    {a.description ? ` · ${a.description}` : ''}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </main>
+        <div className="hidden md:block shrink-0 md:w-80" />
+      </div>
     </div>
   );
 }
@@ -407,7 +431,7 @@ export function AuthorPageClient() {
       <HomeLayout {...baseOptions()}>
         <div className="mx-auto max-w-2xl px-4 py-12">
           <p className="text-fd-muted-foreground">Автор не найден или блог не настроен.</p>
-          <Link href="/" className="text-sm text-fd-muted-foreground hover:underline">
+          <Link href="/" className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
             ← На главную
           </Link>
         </div>
@@ -434,7 +458,7 @@ export function AuthorPageClient() {
               href={htmlUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-fd-muted-foreground hover:underline"
+              className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
             >
               @{author}
             </a>
@@ -452,7 +476,7 @@ export function AuthorPageClient() {
               {posts.map((post) => (
                 <li key={post.number}>
                   <Link href={`/${author}/${post.slug}`} className="group block">
-                    <h3 className="text-lg font-medium group-hover:underline">{post.title}</h3>
+                    <h3 className="text-lg font-medium transition-colors group-hover:text-fd-primary">{post.title}</h3>
                     <p className="mt-1 text-sm text-fd-muted-foreground">
                       {formatDate(post.createdAt)}
                     </p>
@@ -519,7 +543,7 @@ export function BlogPostClient() {
       <HomeLayout {...baseOptions()}>
         <div className="mx-auto max-w-3xl px-4 py-12">
           <p className="text-fd-muted-foreground">Пост не найден.</p>
-          <Link href={`/${author}`} className="text-sm text-fd-muted-foreground hover:underline">
+          <Link href={`/${author}`} className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
             ← {authorEntry?.name ?? author}
           </Link>
         </div>
@@ -531,7 +555,7 @@ export function BlogPostClient() {
     <HomeLayout {...baseOptions()}>
       <div className="mx-auto max-w-3xl px-4 py-12">
         <nav className="mb-8">
-          <Link href={`/${author}`} className="text-sm text-fd-muted-foreground hover:underline">
+          <Link href={`/${author}`} className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground">
             ← {authorEntry?.name ?? post.authorName ?? author}
           </Link>
         </nav>
@@ -553,7 +577,7 @@ export function BlogPostClient() {
                 href={authorEntry?.htmlUrl ?? `https://github.com/${author}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium hover:underline"
+                className="font-medium transition-colors hover:text-fd-primary"
               >
                 {post.authorName ?? author}
               </a>
@@ -572,7 +596,7 @@ export function BlogPostClient() {
             href={post.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-fd-muted-foreground hover:underline"
+            className="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
           >
             Обсудить на GitHub →
           </a>

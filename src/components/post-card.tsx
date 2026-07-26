@@ -60,7 +60,7 @@ export function PostCard({ post, author }: PostCardProps) {
             href={profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium hover:underline"
+            className="text-sm font-medium transition-colors hover:text-fd-primary"
             onClick={(e) => e.stopPropagation()}
           >
             {name}
@@ -70,7 +70,7 @@ export function PostCard({ post, author }: PostCardProps) {
       </header>
 
       <Link href={`/${post.authorLogin}/${post.slug}`} className="group block">
-        <h2 className="mb-3 text-xl font-semibold leading-snug group-hover:underline line-clamp-2">
+        <h2 className="mb-3 text-xl font-semibold leading-snug transition-colors group-hover:text-fd-primary line-clamp-2">
           {post.title}
         </h2>
 
@@ -85,7 +85,7 @@ export function PostCard({ post, author }: PostCardProps) {
           </div>
         ) : null}
 
-        <div className="flex items-center text-sm text-fd-primary hover:underline">
+        <div className="flex items-center text-sm text-fd-primary transition-colors hover:text-fd-primary/80">
           Показать полностью
           <svg
             xmlns="http://www.w3.org/2000/svg"
