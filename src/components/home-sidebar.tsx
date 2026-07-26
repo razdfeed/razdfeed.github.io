@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Rss, Users, Info, Shield } from 'lucide-react';
+import { Search, Rss, Users, Info, Shield, PenLine } from 'lucide-react';
 import { SearchTrigger } from 'fumadocs-ui/layouts/shared/slots/search-trigger';
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 
 const items = [
   { href: '/', label: 'Фид', icon: Rss },
   { href: '/authors', label: 'Авторы', icon: Users },
-  { href: '/docs', label: 'О проекте', icon: Info },
+  { href: '/docs/connect', label: 'Как публиковать?', icon: PenLine },
   { href: '/docs/rules', label: 'Правила', icon: Shield },
 ];
 

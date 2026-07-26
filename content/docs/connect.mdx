@@ -1,0 +1,48 @@
+---
+title: Как подключиться
+description: Как добавить свой блог в RazdFeed
+---
+
+# Как подключить блог к RazdFeed
+
+RazdFeed собирает посты авторов из GitHub Issues и Discussions. Чтобы ваш блог появился в ленте, нужно создать в репозитории файл `.razdfeed.yml`.
+
+## Как это работает
+
+1. Вы пишете посты как GitHub Issues (или Discussions) в своём репозитории.
+2. Бот [fetcher-collector](https://github.com/razdfeed/fetcher-collector) периодически забирает новые посты.
+3. RazdFeed показывает их в общей ленте и на странице автора.
+
+## Файл `.razdfeed.yml`
+
+Создайте файл в корне репозитория:
+
+```yaml
+name: Имя автора
+description: Короткое описание блога
+language: ru
+category: Announcements
+labels:
+  - blog
+source:
+  repo: owner/repo
+```
+
+Поля:
+
+- `name` — имя автора, которое отображается на сайте.
+- `description` — описание блога.
+- `language` — язык постов (`ru`, `en` и т.д.).
+- `category` — категория GitHub Discussions, из которой забирать посты.
+- `labels` — метки issues/discussions, которые нужно импортировать.
+- `source.repo` — репозиторий, где находятся посты. Если не указан, используется репозиторий автора.
+
+## Требования
+
+- Репозиторий должен быть **публичным**.
+- Issues или Discussions должны быть включены в настройках репозитория.
+- Для комментариев через giscus нужно установить приложение [giscus](https://github.com/apps/giscus) и включить Discussions.
+
+## Подробнее
+
+Подробная документация по сбору постов находится в репозитории [razdfeed/fetcher-collector](https://github.com/razdfeed/fetcher-collector).
