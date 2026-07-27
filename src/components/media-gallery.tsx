@@ -281,7 +281,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setZoomed((z) => (z !== null && z > 0 ? z - 1 : z)); }}
                 disabled={zoomed === 0}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-default"
               >
                 <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 18-6-6 6-6" />
@@ -291,7 +291,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setZoomed((z) => (z !== null && z < images.length - 1 ? z + 1 : z)); }}
                 disabled={zoomed === images.length - 1}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-default"
               >
                 <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="m9 18 6-6-6-6" />
