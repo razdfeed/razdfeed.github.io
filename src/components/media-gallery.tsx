@@ -283,6 +283,18 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
             else setZoomed(null);
           }}
         >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setZoomed(null); }}
+            aria-label="Закрыть"
+            className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+
           {images.length > 1 && (
             <>
               <button
