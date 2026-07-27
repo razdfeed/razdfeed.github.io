@@ -14,6 +14,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const [zoomed, setZoomed] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set());
+  const [isDragging, setIsDragging] = useState(false);
 
   const GAP = 12;
 
@@ -71,13 +72,59 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
     setLoadedSet((prev) => new Set(prev).add(i));
   };
 
+  const dragState = useRef<{ startX: number; scrollLeft: number; moved: boolean } | null>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    dragState.current = { startX: e.clientX, scrollLeft: el.scrollLeft, moved: false };
+    setIsDragging(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const el = scrollRef.current;
+    const st = dragState.current;
+    if (!el || !st) return;
+    const dx = e.clientX - st.startX;
+    if (Math.abs(dx) > 5) st.moved = true;
+    el.scrollLeft = st.scrollLeft - dx;
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    dragState.current = null;
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    dragState.current = null;
+    setIsDragging(false);
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+    }
+  }, []);
+
+  const handleImageClick = useCallback((i: number) => {
+    if (dragState.current?.moved) return;
+    setZoomed(i);
+  }, []);
+
   return (
     <>
       <div className="relative w-full overflow-hidden rounded-lg">
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          className={`flex w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', columnGap: `${GAP}px` }}
         >
           {images.map((src, i) => (
@@ -85,6 +132,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
               key={i}
               ref={i === 0 ? slideRef : undefined}
               className="relative w-[86%] shrink-0 snap-start"
+              onClick={() => handleImageClick(i)}
             >
               {!loadedSet.has(i) && (
                 <span className="skeleton-shimmer absolute inset-0 w-full" style={{ minHeight: '300px' }} />
@@ -93,10 +141,10 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                 src={src}
                 alt={`${alt} ${i + 1}`}
                 loading="lazy"
-                className={`relative w-full transition-opacity duration-500 ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
+                draggable={false}
+                className={`relative w-full transition-opacity duration-500 select-none pointer-events-none ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
                 style={{ maxHeight: '490px', objectFit: 'contain' }}
                 onLoad={() => setLoaded(i)}
-                onClick={() => setZoomed(i)}
               />
             </div>
           ))}
