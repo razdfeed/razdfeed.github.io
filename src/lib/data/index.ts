@@ -35,6 +35,7 @@ export interface FeedPost {
   media?: FeedPostMedia;
   linkPreview?: LinkPreview;
   forwardedFrom?: string | null;
+  forwardedFromUrl?: string | null;
 }
 
 export interface AuthorEntry {

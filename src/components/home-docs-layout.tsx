@@ -52,43 +52,46 @@ export function HomeDocsLayout({ tree: _tree, baseOptions, children }: HomeDocsL
     const root = rootRef.current;
     if (!root) return;
 
-    function findScrollContainers(el: HTMLElement): { sidebar: HTMLElement | null; main: HTMLElement | null } {
-      let node: HTMLElement | null = el;
-      let sidebar: HTMLElement | null = null;
-      let main: HTMLElement | null = null;
+    function getSidebarViewport(): HTMLElement | null {
+      if (!root) return null;
+      const sidebar = root.querySelector('#nd-sidebar');
+      if (!sidebar) return null;
+      return sidebar.querySelector('[style*="overflow: scroll"]') as HTMLElement | null;
+    }
 
-      while (node) {
-        const style = getComputedStyle(node);
-        if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-          const rect = node.getBoundingClientRect();
-          if (rect.left < 200 && !sidebar) {
-            sidebar = node;
-          } else if (!main) {
-            main = node;
-          }
-        }
-        node = node.parentElement;
-      }
-      return { sidebar, main };
+    function getSidebar(): HTMLElement | null {
+      if (!root) return null;
+      return root.querySelector('#nd-sidebar') as HTMLElement | null;
     }
 
     function onWheel(e: WheelEvent) {
-      const { sidebar, main } = findScrollContainers(e.target as HTMLElement);
-      if (!sidebar || !main) return;
+      const sidebar = getSidebar();
+      if (!sidebar || !sidebar.contains(e.target as Node)) return;
 
-      const sidebarEl = sidebar;
-      const mainEl = main;
+      const viewport = getSidebarViewport();
+      if (!viewport) return;
 
-      const atBottom = sidebarEl.scrollTop + sidebarEl.clientHeight >= sidebarEl.scrollHeight - 2;
-      const atTop = sidebarEl.scrollTop <= 0;
+      const delta = e.deltaY;
+      const atBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1;
+      const atTop = viewport.scrollTop <= 0;
 
-      if (e.deltaY > 0 && atBottom) {
-        e.preventDefault();
-        mainEl.scrollBy({ top: e.deltaY, behavior: 'auto' });
-      } else if (e.deltaY < 0 && atTop && mainEl.scrollTop > 0) {
-        e.preventDefault();
-        mainEl.scrollBy({ top: e.deltaY, behavior: 'auto' });
-      }
+      const scrollingDown = delta > 0;
+      const scrollingUp = delta < 0;
+
+      const sidebarCanScrollDown = !atBottom;
+      const sidebarCanScrollUp = !atTop;
+
+      if (scrollingDown && sidebarCanScrollDown) return;
+      if (scrollingUp && sidebarCanScrollUp) return;
+
+      const pageCanScrollUp = window.scrollY > 0;
+      const pageCanScrollDown = window.scrollY + window.innerHeight < document.documentElement.scrollHeight - 1;
+
+      if (scrollingDown && !pageCanScrollDown) return;
+      if (scrollingUp && !pageCanScrollUp) return;
+
+      e.preventDefault();
+      window.scrollBy({ top: delta, behavior: 'auto' });
     }
 
     root.addEventListener('wheel', onWheel, { passive: false });

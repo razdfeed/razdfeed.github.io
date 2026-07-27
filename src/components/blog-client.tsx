@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 import { DocsPage, DocsBody, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
 import { TOCProvider, TOCPopover, TOC } from 'fumadocs-ui/layouts/docs/page/slots/toc';
@@ -127,6 +128,25 @@ export function HomePageClient() {
   }
 
   const hasMore = visibleCount < allPosts.length || !!nextPage;
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!hasMore || loadingMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          void loadMore();
+        }
+      },
+      { rootMargin: '400px' },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, allPosts.length, visibleCount, nextPage]);
 
   return (
     <DocsPage
@@ -170,22 +190,21 @@ export function HomePageClient() {
             ))}
           </div>
 
-          {loadingMore && (
-            <div className="divide-y divide-fd-border">
-              {[0, 1, 2].map((i) => (
-                <SkeletonCard key={`loading-more-${i}`} />
-              ))}
-            </div>
-          )}
-
-          {!loadingMore && hasMore && (
-            <div className="flex justify-center py-8">
-              <button
-                onClick={loadMore}
-                className="cursor-pointer rounded-lg border border-fd-border bg-fd-secondary px-6 py-2.5 text-sm font-medium text-fd-foreground shadow-sm transition-all duration-200 hover:bg-fd-accent hover:text-fd-accent-foreground hover:shadow-md active:scale-95 active:bg-fd-accent"
-              >
-                Показать ещё
-              </button>
+          {(loadingMore || hasMore) && (
+            <div
+              ref={sentinelRef}
+              className="flex justify-center py-8"
+            >
+              {loadingMore ? (
+                <Loader2 className="h-6 w-6 animate-spin text-fd-primary" />
+              ) : (
+                <button
+                  onClick={loadMore}
+                  className="cursor-pointer rounded-lg border border-fd-border bg-fd-secondary px-6 py-2.5 text-sm font-medium text-fd-foreground shadow-sm transition-all duration-200 hover:bg-fd-accent hover:text-fd-accent-foreground hover:shadow-md active:scale-95 active:bg-fd-accent"
+                >
+                  Показать ещё
+                </button>
+              )}
             </div>
           )}
         </>
@@ -347,6 +366,25 @@ export function AuthorPageClient() {
   }, [author]);
 
   const hasMore = visibleCount < posts.length;
+  const authorSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = authorSentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((c) => c + PAGE_SIZE);
+        }
+      },
+      { rootMargin: '400px' },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, posts.length, visibleCount]);
 
   const avatar = authorEntry?.avatar ?? posts[0]?.authorAvatar ?? '';
   const displayName = authorEntry?.name ?? posts[0]?.authorName ?? author;
@@ -412,13 +450,11 @@ export function AuthorPageClient() {
           </div>
 
           {hasMore && (
-            <div className="flex justify-center py-8">
-              <button
-                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                className="cursor-pointer rounded-lg border border-fd-border bg-fd-secondary px-6 py-2.5 text-sm font-medium text-fd-foreground shadow-sm transition-all duration-200 hover:bg-fd-accent hover:text-fd-accent-foreground hover:shadow-md active:scale-95 active:bg-fd-accent"
-              >
-                Показать ещё
-              </button>
+            <div
+              ref={authorSentinelRef}
+              className="flex justify-center py-8"
+            >
+              <Loader2 className="h-6 w-6 animate-spin text-fd-primary" />
             </div>
           )}
         </>
@@ -529,11 +565,25 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
             </div>
           </div>
           {post.forwardedFrom && (
-            <div className="mb-3 flex items-center gap-2 text-xs text-fd-muted-foreground">
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <div className="mb-3 rounded-lg border border-fd-accent/40 bg-fd-accent/10 p-2.5 flex items-center gap-2 text-xs text-fd-muted-foreground">
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-fd-accent">
                 <path d="M15 14l5-5-5-5" /><path d="M20 9H9a4 4 0 0 0-4 4v1" />
               </svg>
-              Перепост из <span className="font-medium text-fd-foreground">{post.forwardedFrom}</span>
+              <span className="truncate">
+                Перепост из{' '}
+                {post.forwardedFromUrl ? (
+                  <a
+                    href={post.forwardedFromUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-fd-foreground transition-colors hover:text-fd-primary hover:underline"
+                  >
+                    {post.forwardedFrom}
+                  </a>
+                ) : (
+                  <span className="font-medium text-fd-foreground">{post.forwardedFrom}</span>
+                )}
+              </span>
             </div>
           )}
 

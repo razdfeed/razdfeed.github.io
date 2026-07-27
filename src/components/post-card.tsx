@@ -43,6 +43,7 @@ interface FeedPost {
   media?: FeedPostMedia;
   linkPreview?: LinkPreview;
   forwardedFrom?: string | null;
+  forwardedFromUrl?: string | null;
 }
 
 interface AuthorEntry {
@@ -192,11 +193,26 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
       )}
 
       {post.forwardedFrom && (
-        <div className="mb-3 flex items-center gap-2 text-xs text-fd-muted-foreground">
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <div className="mb-3 rounded-lg border border-fd-accent/40 bg-fd-accent/10 p-2.5 flex items-center gap-2 text-xs text-fd-muted-foreground">
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-fd-accent">
             <path d="M15 14l5-5-5-5" /><path d="M20 9H9a4 4 0 0 0-4 4v1" />
           </svg>
-          Перепост из <span className="font-medium text-fd-foreground">{post.forwardedFrom}</span>
+          <span className="truncate">
+            Перепост из{' '}
+            {post.forwardedFromUrl ? (
+              <a
+                href={post.forwardedFromUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-fd-foreground transition-colors hover:text-fd-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {post.forwardedFrom}
+              </a>
+            ) : (
+              <span className="font-medium text-fd-foreground">{post.forwardedFrom}</span>
+            )}
+          </span>
         </div>
       )}
 
