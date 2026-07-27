@@ -9,10 +9,19 @@ interface MediaGalleryProps {
 
 export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const slideRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomed, setZoomed] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set());
+
+  const GAP = 12;
+
+  const getSlideStep = useCallback(() => {
+    const slide = slideRef.current;
+    if (!slide) return 0;
+    return slide.offsetWidth + GAP;
+  }, []);
 
   useEffect(() => {
     if (zoomed !== null) {
@@ -36,8 +45,8 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const scrollToIndex = useCallback((i: number) => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
-  }, []);
+    el.scrollTo({ left: i * getSlideStep(), behavior: 'smooth' });
+  }, [getSlideStep]);
 
   const scrollPrev = useCallback(() => {
     const i = Math.max(0, activeIndex - 1);
@@ -52,9 +61,11 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
+    const step = getSlideStep();
+    if (!step) return;
+    const i = Math.round(el.scrollLeft / step);
     setActiveIndex(i);
-  }, []);
+  }, [getSlideStep]);
 
   const setLoaded = (i: number) => {
     setLoadedSet((prev) => new Set(prev).add(i));
@@ -67,12 +78,13 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
           ref={scrollRef}
           onScroll={handleScroll}
           className="flex w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', columnGap: `${GAP}px` }}
         >
           {images.map((src, i) => (
             <div
               key={i}
-              className="relative w-full shrink-0 snap-center"
+              ref={i === 0 ? slideRef : undefined}
+              className="relative w-[86%] shrink-0 snap-start"
             >
               {!loadedSet.has(i) && (
                 <span className="skeleton-shimmer absolute inset-0 w-full" style={{ minHeight: '300px' }} />
