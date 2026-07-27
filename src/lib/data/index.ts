@@ -34,6 +34,7 @@ export interface FeedPost {
   slug: string;
   media?: FeedPostMedia;
   linkPreview?: LinkPreview;
+  forwardedFrom?: string | null;
 }
 
 export interface AuthorEntry {
