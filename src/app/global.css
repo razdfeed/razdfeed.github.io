@@ -11,6 +11,14 @@
   100% { background-position: 200% 0; }
 }
 
+@utility scrollbar-hide {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @utility skeleton-shimmer {
   background-color: rgba(17, 17, 17, 0.08);
   background-image: linear-gradient(

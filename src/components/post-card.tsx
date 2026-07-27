@@ -8,6 +8,7 @@ import { DocsBody } from 'fumadocs-ui/layouts/docs/page';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 import { MediaImage } from '@/components/media-image';
+import { MediaGallery } from '@/components/media-gallery';
 import { LinkPreviewCard } from '@/components/link-preview-card';
 
 interface FeedPostMedia {
@@ -217,10 +218,12 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
       )}
 
       {post.media && post.media.images.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2">
-          {post.media.images.slice(0, 4).map((src, i) => (
-            <MediaImage key={i} src={src} />
-          ))}
+        <div className="mb-4 group/gallery">
+          {post.media.images.length === 1 ? (
+            <MediaImage src={post.media.images[0]} />
+          ) : (
+            <MediaGallery images={post.media.images} alt={post.title || post.authorLogin} />
+          )}
         </div>
       )}
       {post.media && post.media.videos.length > 0 && (

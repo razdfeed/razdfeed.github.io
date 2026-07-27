@@ -20,6 +20,7 @@ import { LinkPreviewCard } from '@/components/link-preview-card';
 import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 import { MediaImage } from '@/components/media-image';
+import { MediaGallery } from '@/components/media-gallery';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -589,10 +590,12 @@ export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
 
           <DocsBody>
             {post.media && post.media.images.length > 0 && (
-              <div className="mb-4 flex flex-col gap-2">
-                {post.media.images.map((src, i) => (
-                  <MediaImage key={i} src={src} />
-                ))}
+              <div className="mb-4 group/gallery">
+                {post.media.images.length === 1 ? (
+                  <MediaImage src={post.media.images[0]} />
+                ) : (
+                  <MediaGallery images={post.media.images} alt={post.title || post.author} />
+                )}
               </div>
             )}
             {post.media && post.media.videos.length > 0 && (
