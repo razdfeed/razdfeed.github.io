@@ -2,7 +2,7 @@
 /node_modules
 
 # generated content
-.source
+# .source  (keep generated fumadocs collections so dev/build can resolve collections/server)
 
 # test & build
 /coverage

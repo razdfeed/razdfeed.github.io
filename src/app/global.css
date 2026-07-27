@@ -45,3 +45,10 @@ html > body[data-scroll-locked] {
 #nd-nav nav > div {
   max-width: var(--fd-layout-width) !important;
 }
+
+#nd-page {
+  max-width: 680px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}

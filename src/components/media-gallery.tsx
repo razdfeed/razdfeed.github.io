@@ -120,7 +120,10 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
     const step = getStep();
     if (step === 0) return;
     if (!st.moved) {
-      goTo(indexRef.current, true);
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = e.clientX - rect.left + offsetRef.current;
+      const targetIndex = Math.max(0, Math.min(images.length - 1, Math.floor(x / step)));
+      setZoomed(targetIndex);
       return;
     }
     const shifted = Math.round(-dx / step);
@@ -163,7 +166,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onWheel={handleWheel}
-            className={`flex h-[320px] sm:h-[360px] touch-pan-y ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            className={`flex h-[256px] sm:h-[288px] touch-pan-y ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             style={{ columnGap: `${GAP_PX}px`, transform: 'translateX(0px)', willChange: 'transform' }}
           >
             {images.map((src, i) => {
@@ -177,6 +180,12 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                     aspectRatio: loadedSet.has(i) ? ratio : '16 / 9',
                   }}
                   onClick={() => handleSlideClick(i)}
+                  onPointerUp={(e) => {
+                    if (dragRef.current && !dragRef.current.moved) {
+                      e.stopPropagation();
+                      setZoomed(i);
+                    }
+                  }}
                 >
                   {!loadedSet.has(i) && (
                     <span className="skeleton-shimmer absolute inset-0 w-full" />
