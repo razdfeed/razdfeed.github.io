@@ -7,10 +7,7 @@ interface MediaGalleryProps {
   alt?: string;
 }
 
-const SLIDE_WIDTH_PCT = 84;
 const GAP_PX = 8;
-const SLIDE_HEIGHT = 320;
-const SLIDE_HEIGHT_MOBILE = 280;
 
 export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,9 +29,9 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   useEffect(() => { indexRef.current = activeIndex; }, [activeIndex]);
 
   const getStep = useCallback(() => {
-    const c = containerRef.current;
-    if (!c) return 0;
-    return (c.clientWidth * SLIDE_WIDTH_PCT) / 100 + GAP_PX;
+    const slide = trackRef.current?.firstElementChild as HTMLElement | null;
+    if (!slide) return 0;
+    return slide.clientWidth + GAP_PX;
   }, []);
 
   const maxOffset = useCallback(() => {
@@ -126,12 +123,11 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
       goTo(indexRef.current, true);
       return;
     }
-    const threshold = step * 0.15;
-    let target = indexRef.current;
-    if (dx < -threshold) target = indexRef.current + 1;
-    else if (dx > threshold) target = indexRef.current - 1;
+    const shifted = Math.round(-dx / step);
+    let target = indexRef.current + shifted;
+    target = Math.max(0, Math.min(images.length - 1, target));
     goTo(target, true);
-  }, [getStep, goTo]);
+  }, [getStep, goTo, images.length]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (images.length <= 1) return;
@@ -158,81 +154,95 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
 
   return (
     <>
-      <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-fd-muted/30">
-        <div
-          ref={trackRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onWheel={handleWheel}
-          className={`flex touch-pan-y ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-          style={{ columnGap: `${GAP_PX}px`, transform: 'translateX(0px)', willChange: 'transform' }}
-        >
-          {images.map((src, i) => (
-            <div
-              key={i}
-              className="relative shrink-0 select-none overflow-hidden rounded-xl bg-fd-muted/50 flex items-center justify-center"
-              style={{ width: `${SLIDE_WIDTH_PCT}%` }}
-              onClick={() => handleSlideClick(i)}
-            >
-              {!loadedSet.has(i) && (
-                <span className="skeleton-shimmer absolute inset-0 w-full" style={{ minHeight: '200px' }} />
-              )}
-              <img
-                src={src}
-                alt={`${alt} ${i + 1}`}
-                loading="lazy"
-                draggable={false}
-                className={`w-full transition-opacity duration-500 select-none pointer-events-none object-contain ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
-                style={{ maxHeight: '360px' }}
-                onLoad={(e) => handleImageLoad(i, e)}
-              />
-            </div>
-          ))}
+      <div className="w-full">
+        <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-fd-muted/30">
+          <div
+            ref={trackRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onWheel={handleWheel}
+            className={`flex h-[320px] sm:h-[360px] touch-pan-y ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={{ columnGap: `${GAP_PX}px`, transform: 'translateX(0px)', willChange: 'transform' }}
+          >
+            {images.map((src, i) => {
+              const ratio = ratios[i] ?? 1;
+              return (
+                <div
+                  key={i}
+                  className="relative shrink-0 select-none overflow-hidden rounded-xl bg-fd-muted/50 flex items-center justify-center"
+                  style={{
+                    height: '100%',
+                    aspectRatio: loadedSet.has(i) ? ratio : '16 / 9',
+                  }}
+                  onClick={() => handleSlideClick(i)}
+                >
+                  {!loadedSet.has(i) && (
+                    <span className="skeleton-shimmer absolute inset-0 w-full" />
+                  )}
+                  <img
+                    src={src}
+                    alt={`${alt} ${i + 1}`}
+                    loading="lazy"
+                    draggable={false}
+                    className={`transition-opacity duration-500 select-none pointer-events-none h-full w-full object-contain ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={(e) => handleImageLoad(i, e)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => goTo(activeIndex - 1, true)}
+                disabled={activeIndex === 0}
+                aria-label="Предыдущее фото"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70 disabled:pointer-events-none disabled:opacity-0"
+              >
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => goTo(activeIndex + 1, true)}
+                disabled={activeIndex === images.length - 1}
+                aria-label="Следующее фото"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70 disabled:pointer-events-none disabled:opacity-0"
+              >
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+
+              <div className="absolute top-2 right-2 rounded-full bg-black/50 px-2.5 py-0.5 text-xs font-medium text-white">
+                {activeIndex + 1}/{images.length}
+              </div>
+            </>
+          )}
         </div>
 
         {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => goTo(activeIndex - 1, true)}
-              disabled={activeIndex === 0}
-              aria-label="Предыдущее фото"
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70 disabled:pointer-events-none disabled:opacity-0"
-            >
-              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(activeIndex + 1, true)}
-              disabled={activeIndex === images.length - 1}
-              aria-label="Следующее фото"
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70 disabled:pointer-events-none disabled:opacity-0"
-            >
-              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="mt-2 flex items-center justify-between gap-3 px-1">
+            <div className="flex gap-1.5">
               {images.map((_, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => goTo(i, true)}
                   aria-label={`Фото ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all ${i === activeIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`}
+                  className={`h-1.5 rounded-full transition-all ${i === activeIndex ? 'w-5 bg-fd-primary' : 'w-1.5 bg-fd-muted-foreground/50'}`}
                 />
               ))}
             </div>
-
-            <div className="absolute top-2 right-2 rounded-full bg-black/50 px-2.5 py-0.5 text-xs font-medium text-white">
+            <span className="text-xs text-fd-muted-foreground">
               {activeIndex + 1}/{images.length}
-            </div>
-          </>
+            </span>
+          </div>
         )}
       </div>
 
