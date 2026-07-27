@@ -42,13 +42,13 @@ export function MediaImage({ src, alt = '' }: { src: string; alt?: string }) {
       </span>
       {zoomed && (
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center p-8 cursor-zoom-out transition-all duration-300 ${overlayVisible ? 'bg-black/80 opacity-100' : 'bg-black/0 opacity-0'}`}
+          className={`fixed inset-0 z-50 flex items-center justify-center cursor-zoom-out transition-all duration-300 p-0 sm:p-8 ${overlayVisible ? 'bg-black/90 opacity-100' : 'bg-black/0 opacity-0'}`}
           onClick={() => setZoomed(false)}
         >
           <img
             src={src}
             alt={alt}
-            className={`max-h-full max-w-full rounded-lg object-contain transition-all duration-300 ${overlayVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+            className={`max-h-full w-full object-contain transition-all duration-300 sm:w-auto sm:max-w-full sm:rounded-lg ${overlayVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
             loading="lazy"
           />
         </div>
