@@ -7,22 +7,56 @@ interface MediaGalleryProps {
   alt?: string;
 }
 
+const SLIDE_WIDTH_PCT = 86;
+const GAP_PX = 12;
+
 export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const slideRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const [zoomed, setZoomed] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set());
-  const [isDragging, setIsDragging] = useState(false);
 
-  const GAP = 12;
+  const dragRef = useRef<{ startX: number; startOffset: number; moved: boolean; pointerId: number } | null>(null);
+  const offsetRef = useRef(0);
+  const indexRef = useRef(0);
+  const animatingRef = useRef(false);
 
-  const getSlideStep = useCallback(() => {
-    const slide = slideRef.current;
-    if (!slide) return 0;
-    return slide.offsetWidth + GAP;
+  useEffect(() => { offsetRef.current = offset; }, [offset]);
+  useEffect(() => { indexRef.current = activeIndex; }, [activeIndex]);
+
+  const getStep = useCallback(() => {
+    const c = containerRef.current;
+    if (!c) return 0;
+    return (c.clientWidth * SLIDE_WIDTH_PCT) / 100 + GAP_PX;
   }, []);
+
+  const maxOffset = useCallback(() => {
+    const c = containerRef.current;
+    if (!c) return 0;
+    const step = getStep();
+    const total = images.length * step - GAP_PX;
+    return Math.max(0, total - c.clientWidth);
+  }, [getStep, images.length]);
+
+  const goTo = useCallback((i: number, animate: boolean) => {
+    const clamped = Math.max(0, Math.min(images.length - 1, i));
+    const step = getStep();
+    const targetOffset = -Math.min(clamped * step, maxOffset());
+    animatingRef.current = animate;
+    if (trackRef.current) {
+      trackRef.current.style.transition = animate ? 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)' : 'none';
+      trackRef.current.style.transform = `translateX(${targetOffset}px)`;
+    }
+    setOffset(targetOffset);
+    setActiveIndex(clamped);
+    if (animate) {
+      setTimeout(() => { animatingRef.current = false; }, 360);
+    }
+  }, [getStep, maxOffset, images.length]);
 
   useEffect(() => {
     if (zoomed !== null) {
@@ -43,121 +77,100 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [zoomed, images.length]);
 
-  const scrollToIndex = useCallback((i: number) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTo({ left: i * getSlideStep(), behavior: 'smooth' });
-  }, [getSlideStep]);
+  useEffect(() => {
+    const handleResize = () => goTo(indexRef.current, false);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [goTo]);
 
-  const scrollPrev = useCallback(() => {
-    const i = Math.max(0, activeIndex - 1);
-    scrollToIndex(i);
-  }, [activeIndex, scrollToIndex]);
+  // Pointer events for drag
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (images.length <= 1) return;
+    dragRef.current = { startX: e.clientX, startOffset: offsetRef.current, moved: false, pointerId: e.pointerId };
+    setIsDragging(true);
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'none';
+    }
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }, [images.length]);
 
-  const scrollNext = useCallback(() => {
-    const i = Math.min(images.length - 1, activeIndex + 1);
-    scrollToIndex(i);
-  }, [activeIndex, images.length, scrollToIndex]);
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const st = dragRef.current;
+    if (!st) return;
+    const dx = e.clientX - st.startX;
+    if (Math.abs(dx) > 4) st.moved = true;
+    let next = st.startOffset + dx;
+    const max = maxOffset();
+    if (next > 0) next = next * 0.35;
+    if (next < -max) next = -max + (next + max) * 0.35;
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translateX(${next}px)`;
+    }
+    setOffset(next);
+    offsetRef.current = next;
+  }, [maxOffset]);
 
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const step = getSlideStep();
-    if (!step) return;
-    const i = Math.round(el.scrollLeft / step);
-    setActiveIndex(i);
-  }, [getSlideStep]);
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    const st = dragRef.current;
+    dragRef.current = null;
+    setIsDragging(false);
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+    if (!st) return;
+    const dx = offsetRef.current - st.startOffset;
+    const step = getStep();
+    if (step === 0) return;
+    if (!st.moved) {
+      goTo(indexRef.current, true);
+      return;
+    }
+    const threshold = step * 0.15;
+    let target = indexRef.current;
+    if (dx < -threshold) target = indexRef.current + 1;
+    else if (dx > threshold) target = indexRef.current - 1;
+    goTo(target, true);
+  }, [getStep, goTo]);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (images.length <= 1) return;
+    const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (delta > 0) {
+      goTo(indexRef.current + 1, true);
+    } else {
+      goTo(indexRef.current - 1, true);
+    }
+  }, [goTo, images.length]);
+
+  const handleSlideClick = useCallback((i: number) => {
+    if (dragRef.current?.moved) return;
+    setZoomed(i);
+  }, []);
 
   const setLoaded = (i: number) => {
     setLoadedSet((prev) => new Set(prev).add(i));
   };
 
-  const dragState = useRef<{ startX: number; scrollLeft: number; moved: boolean } | null>(null);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.style.scrollBehavior = 'auto';
-    dragState.current = { startX: e.clientX, scrollLeft: el.scrollLeft, moved: false };
-    setIsDragging(true);
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const el = scrollRef.current;
-    const st = dragState.current;
-    if (!el || !st) return;
-    const dx = e.clientX - st.startX;
-    if (Math.abs(dx) > 5) st.moved = true;
-    el.scrollLeft = st.scrollLeft - dx;
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    const el = scrollRef.current;
-    const st = dragState.current;
-    dragState.current = null;
-    setIsDragging(false);
-    if (!el || !st) return;
-    el.style.scrollBehavior = 'smooth';
-    const step = getSlideStep();
-    if (!step) return;
-    const dragDist = st.startX - (el.scrollLeft + (st.scrollLeft - el.scrollLeft));
-    const dragged = (st.scrollLeft - el.scrollLeft);
-    const threshold = step * 0.15;
-    let target = Math.round(el.scrollLeft / step);
-    if (dragged > threshold) target = Math.min(images.length - 1, target + 1);
-    else if (dragged < -threshold) target = Math.max(0, target - 1);
-    el.scrollTo({ left: target * step, behavior: 'smooth' });
-  }, [getSlideStep, images.length]);
-
-  const handleMouseLeave = useCallback(() => {
-    const el = scrollRef.current;
-    const st = dragState.current;
-    dragState.current = null;
-    setIsDragging(false);
-    if (!el || !st) return;
-    el.style.scrollBehavior = 'smooth';
-    const step = getSlideStep();
-    if (!step) return;
-    const target = Math.round(el.scrollLeft / step);
-    el.scrollTo({ left: target * step, behavior: 'smooth' });
-  }, [getSlideStep]);
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      el.scrollLeft += e.deltaY;
-    }
-  }, []);
-
-  const handleImageClick = useCallback((i: number) => {
-    if (dragState.current?.moved) return;
-    setZoomed(i);
-  }, []);
-
   return (
     <>
-      <div className="relative w-full overflow-hidden rounded-lg">
+      <div ref={containerRef} className="relative w-full overflow-hidden rounded-lg">
         <div
-          ref={scrollRef}
-          onScroll={handleScroll}
+          ref={trackRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          className={`flex w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', columnGap: `${GAP}px` }}
+          className={`flex touch-pan-y ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          style={{ columnGap: `${GAP_PX}px`, transform: 'translateX(0px)', willChange: 'transform' }}
         >
           {images.map((src, i) => (
             <div
               key={i}
-              ref={i === 0 ? slideRef : undefined}
-              className="relative w-[86%] shrink-0 snap-start"
-              onClick={() => handleImageClick(i)}
+              className="relative shrink-0 select-none"
+              style={{ width: `${SLIDE_WIDTH_PCT}%` }}
+              onClick={() => handleSlideClick(i)}
             >
               {!loadedSet.has(i) && (
-                <span className="skeleton-shimmer absolute inset-0 w-full" style={{ minHeight: '300px' }} />
+                <span className="skeleton-shimmer absolute inset-0 w-full" style={{ minHeight: '200px' }} />
               )}
               <img
                 src={src}
@@ -176,7 +189,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
           <>
             <button
               type="button"
-              onClick={scrollPrev}
+              onClick={() => goTo(activeIndex - 1, true)}
               disabled={activeIndex === 0}
               aria-label="Предыдущее фото"
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70 disabled:pointer-events-none disabled:opacity-0"
@@ -187,7 +200,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
             </button>
             <button
               type="button"
-              onClick={scrollNext}
+              onClick={() => goTo(activeIndex + 1, true)}
               disabled={activeIndex === images.length - 1}
               aria-label="Следующее фото"
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70 disabled:pointer-events-none disabled:opacity-0"
@@ -202,7 +215,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                 <button
                   key={i}
                   type="button"
-                  onClick={() => scrollToIndex(i)}
+                  onClick={() => goTo(i, true)}
                   aria-label={`Фото ${i + 1}`}
                   className={`h-1.5 rounded-full transition-all ${i === activeIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`}
                 />
