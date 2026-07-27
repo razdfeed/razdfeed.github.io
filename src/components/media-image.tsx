@@ -45,11 +45,23 @@ export function MediaImage({ src, alt = '' }: { src: string; alt?: string }) {
           className={`fixed inset-0 z-50 flex items-center justify-center cursor-zoom-out transition-all duration-300 p-0 sm:p-8 ${overlayVisible ? 'bg-black/90 opacity-100' : 'bg-black/0 opacity-0'}`}
           onClick={() => setZoomed(false)}
         >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setZoomed(false); }}
+            aria-label="Закрыть"
+            className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
           <img
             src={src}
             alt={alt}
             className={`max-h-full w-full object-contain transition-all duration-300 sm:w-auto sm:max-w-full sm:rounded-lg ${overlayVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
             loading="lazy"
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
