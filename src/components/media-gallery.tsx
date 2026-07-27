@@ -20,6 +20,8 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set());
   const [ratios, setRatios] = useState<Record<number, number>>({});
 
+  const lightboxDragRef = useRef<{ startX: number; moved: boolean; pointerId: number } | null>(null);
+
   const dragRef = useRef<{ startX: number; startOffset: number; moved: boolean; pointerId: number } | null>(null);
   const offsetRef = useRef(0);
   const indexRef = useRef(0);
@@ -120,8 +122,9 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
     const step = getStep();
     if (step === 0) return;
     if (!st.moved) {
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const x = e.clientX - rect.left + offsetRef.current;
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const x = e.clientX - rect.left - offsetRef.current;
       const targetIndex = Math.max(0, Math.min(images.length - 1, Math.floor(x / step)));
       setZoomed(targetIndex);
       return;
@@ -259,6 +262,26 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
         <div
           className={`fixed inset-0 z-50 flex items-center justify-center cursor-zoom-out transition-all duration-300 p-0 sm:p-4 ${overlayVisible ? 'bg-black/90 opacity-100' : 'bg-black/0 opacity-0'}`}
           onClick={() => setZoomed(null)}
+          onPointerDown={(e) => {
+            if (images.length <= 1) return;
+            lightboxDragRef.current = { startX: e.clientX, moved: false, pointerId: e.pointerId };
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            const st = lightboxDragRef.current;
+            if (!st) return;
+            if (Math.abs(e.clientX - st.startX) > 4) st.moved = true;
+          }}
+          onPointerUp={(e) => {
+            const st = lightboxDragRef.current;
+            lightboxDragRef.current = null;
+            try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+            if (!st || st.moved) return;
+            const dx = e.clientX - st.startX;
+            if (dx < -30 && zoomed < images.length - 1) setZoomed(zoomed + 1);
+            else if (dx > 30 && zoomed > 0) setZoomed(zoomed - 1);
+            else setZoomed(null);
+          }}
         >
           {images.length > 1 && (
             <>
@@ -290,6 +313,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
             className={`max-h-full w-full object-contain transition-all duration-300 sm:w-auto sm:max-w-full sm:rounded-lg ${overlayVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
             loading="lazy"
             onClick={(e) => e.stopPropagation()}
+            draggable={false}
           />
           {images.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
