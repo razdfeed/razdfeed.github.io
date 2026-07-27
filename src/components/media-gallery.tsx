@@ -7,8 +7,10 @@ interface MediaGalleryProps {
   alt?: string;
 }
 
-const SLIDE_WIDTH_PCT = 86;
-const GAP_PX = 12;
+const SLIDE_WIDTH_PCT = 84;
+const GAP_PX = 8;
+const SLIDE_HEIGHT = 320;
+const SLIDE_HEIGHT_MOBILE = 280;
 
 export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,6 +21,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const [zoomed, setZoomed] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [loadedSet, setLoadedSet] = useState<Set<number>>(new Set());
+  const [ratios, setRatios] = useState<Record<number, number>>({});
 
   const dragRef = useRef<{ startX: number; startOffset: number; moved: boolean; pointerId: number } | null>(null);
   const offsetRef = useRef(0);
@@ -145,13 +148,17 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
     setZoomed(i);
   }, []);
 
-  const setLoaded = (i: number) => {
-    setLoadedSet((prev) => new Set(prev).add(i));
-  };
+  const handleImageLoad = (i: number, e: React.SyntheticEvent<HTMLImageElement>) =>
+    {
+      const img = e.currentTarget;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      setRatios((prev) => ({ ...prev, [i]: ratio }));
+      setLoadedSet((prev) => new Set(prev).add(i));
+    };
 
   return (
     <>
-      <div ref={containerRef} className="relative w-full overflow-hidden rounded-lg">
+      <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-fd-muted/30">
         <div
           ref={trackRef}
           onPointerDown={handlePointerDown}
@@ -165,7 +172,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
           {images.map((src, i) => (
             <div
               key={i}
-              className="relative shrink-0 select-none"
+              className="relative shrink-0 select-none overflow-hidden rounded-xl bg-fd-muted/50 flex items-center justify-center"
               style={{ width: `${SLIDE_WIDTH_PCT}%` }}
               onClick={() => handleSlideClick(i)}
             >
@@ -177,9 +184,9 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                 alt={`${alt} ${i + 1}`}
                 loading="lazy"
                 draggable={false}
-                className={`relative w-full transition-opacity duration-500 select-none pointer-events-none ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
-                style={{ maxHeight: '343px', objectFit: 'contain' }}
-                onLoad={() => setLoaded(i)}
+                className={`w-full transition-opacity duration-500 select-none pointer-events-none object-contain ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
+                style={{ maxHeight: '360px' }}
+                onLoad={(e) => handleImageLoad(i, e)}
               />
             </div>
           ))}
