@@ -93,7 +93,7 @@ export async function fetchAllPosts(): Promise<FeedPost[]> {
 
 export async function fetchAuthors(): Promise<AuthorEntry[]> {
   const data = await fetchJson<AuthorsFile>('authors.json');
-  return data?.authors ?? [];
+  return (data?.authors ?? []).filter((a) => a.postCount > 0);
 }
 
 export function findAuthor(authors: AuthorEntry[], login: string): AuthorEntry | null {
