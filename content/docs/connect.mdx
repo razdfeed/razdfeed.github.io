@@ -1,33 +1,60 @@
 ---
 title: Как подключиться
-description: Как добавить свой блог в RazdFeed
+description: Как добавить свой Telegram-канал или GitHub Discussions в RazdFeed
 ---
 
-# Как подключить блог к RazdFeed
+# Как подключиться к RazdFeed
 
-RazdFeed собирает посты авторов из GitHub Discussions. Чтобы ваш блог появился в ленте, нужно создать служебный репозиторий `{ваш-логин}/razdfeed` с файлом `.razdfeed.yml`.
+RazdFeed собирает посты из двух источников: **Telegram-каналов** и **GitHub Discussions**. Чтобы добавить свой фид, создайте служебный репозиторий `{ваш-логин}/razdfeed` с файлом `.razdfeed.yml`.
 
-## Как это работает
+## Telegram
 
-1. Вы пишете посты в виде GitHub Discussions в категории **Announcements** вашего основного репозитория (например, `dealenx/dealenx/discussions/categories/announcements`).
-2. Создаёте служебный репозиторий `dealenx/razdfeed` и добавляете в него файл `.razdfeed.yml`.
-3. Бот [fetcher-collector](https://github.com/razdfeed/fetcher-collector) находит этот файл, читает настройки и забирает посты.
-4. RazdFeed показывает их в общей ленте и на странице автора.
+1. Создайте публичный репозиторий `{ваш-логин}/razdfeed`, например [dealenx/razdfeed](https://github.com/dealenx/razdfeed).
+2. Добавьте файл `.razdfeed.yml`:
 
-## Файл `.razdfeed.yml`
+```yaml
+sources:
+  - type: telegram
+    url: https://t.me/dealenxdev
+```
 
-> Конфигурация файла `.razdfeed.yml` находится в разработке. Текущий формат может измениться.
+3. Убедитесь, что Telegram-канал **публичный**.
+4. RazdFeed подтянет посты и создаст страницу автора по имени канала, например `/dealenxdev`.
 
-Создайте файл `.razdfeed.yml` в корне репозитория `{ваш-логин}/razdfeed`.
+## GitHub Discussions
 
-По умолчанию бот возьмёт посты из `{ваш-логин}/{ваш-логин}/discussions/categories/Announcements`.
+1. Включите **Discussions** в репозитории, **откуда будут тянуться посты**.
+   В нашем примере это [dealenx/dealenx](https://github.com/dealenx/dealenx/discussions/categories/announcements) — именно оттуда RazdFeed забирает обсуждения.
+2. Добавьте в `.razdfeed.yml`:
+
+```yaml
+sources:
+  - type: github
+    url: https://github.com/dealenx/dealenx/discussions/categories/announcements
+```
+
+3. Пишите посты в категории **Announcements** в репозитории-источнике.
+   Пример поста: [dealenx/dealenx/discussions/2](https://github.com/dealenx/dealenx/discussions/2).
+4. Для комментариев установите приложение [giscus](https://github.com/apps/giscus).
+
+## Несколько источников
+
+Можно комбинировать:
+
+```yaml
+sources:
+  - type: github
+    url: https://github.com/dealenx/dealenx/discussions/categories/announcements
+  - type: telegram
+    url: https://t.me/dealenxdev
+```
 
 ## Требования
 
-- Служебный репозиторий `{author}/razdfeed` должен быть **публичным**.
-- В основном репозитории должны быть включены **Discussions**.
-- Для комментариев через giscus нужно установить приложение [giscus](https://github.com/apps/giscus) в основной репозиторий и включить Discussions.
+- Репозиторий `{author}/razdfeed` должен быть **публичным**.
+- Telegram-канал должен быть **публичным**.
+- В GitHub-репозитории-источнике должны быть включены **Discussions**.
 
 ## Подробнее
 
-Подробная документация по сбору постов находится в репозитории [razdfeed/fetcher-collector](https://github.com/razdfeed/fetcher-collector).
+Исходный код сборщика: [razdfeed/fetcher-collector](https://github.com/razdfeed/fetcher-collector).
