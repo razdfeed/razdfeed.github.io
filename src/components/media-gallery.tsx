@@ -77,6 +77,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const el = scrollRef.current;
     if (!el) return;
+    el.style.scrollBehavior = 'auto';
     dragState.current = { startX: e.clientX, scrollLeft: el.scrollLeft, moved: false };
     setIsDragging(true);
   }, []);
@@ -91,14 +92,35 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
   }, []);
 
   const handleMouseUp = useCallback(() => {
+    const el = scrollRef.current;
+    const st = dragState.current;
     dragState.current = null;
     setIsDragging(false);
-  }, []);
+    if (!el || !st) return;
+    el.style.scrollBehavior = 'smooth';
+    const step = getSlideStep();
+    if (!step) return;
+    const dragDist = st.startX - (el.scrollLeft + (st.scrollLeft - el.scrollLeft));
+    const dragged = (st.scrollLeft - el.scrollLeft);
+    const threshold = step * 0.15;
+    let target = Math.round(el.scrollLeft / step);
+    if (dragged > threshold) target = Math.min(images.length - 1, target + 1);
+    else if (dragged < -threshold) target = Math.max(0, target - 1);
+    el.scrollTo({ left: target * step, behavior: 'smooth' });
+  }, [getSlideStep, images.length]);
 
   const handleMouseLeave = useCallback(() => {
+    const el = scrollRef.current;
+    const st = dragState.current;
     dragState.current = null;
     setIsDragging(false);
-  }, []);
+    if (!el || !st) return;
+    el.style.scrollBehavior = 'smooth';
+    const step = getSlideStep();
+    if (!step) return;
+    const target = Math.round(el.scrollLeft / step);
+    el.scrollTo({ left: target * step, behavior: 'smooth' });
+  }, [getSlideStep]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     const el = scrollRef.current;
@@ -143,7 +165,7 @@ export function MediaGallery({ images, alt = '' }: MediaGalleryProps) {
                 loading="lazy"
                 draggable={false}
                 className={`relative w-full transition-opacity duration-500 select-none pointer-events-none ${loadedSet.has(i) ? 'opacity-100' : 'opacity-0'}`}
-                style={{ maxHeight: '490px', objectFit: 'contain' }}
+                style={{ maxHeight: '343px', objectFit: 'contain' }}
                 onLoad={() => setLoaded(i)}
               />
             </div>
