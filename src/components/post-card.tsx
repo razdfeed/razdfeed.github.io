@@ -218,7 +218,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
       )}
 
       {post.media && post.media.images.length > 0 && (
-        <div className="mb-4 group/gallery">
+        <div className="mb-2 group/gallery">
           {post.media.images.length === 1 ? (
             <MediaImage src={post.media.images[0]} />
           ) : (
@@ -227,7 +227,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         </div>
       )}
       {post.media && post.media.videos.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2">
+        <div className="mb-2 flex flex-col gap-2">
           {post.media.videos.slice(0, 2).map((src, i) => (
               <video
                 key={i}
