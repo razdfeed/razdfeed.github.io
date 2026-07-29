@@ -260,7 +260,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-4 flex cursor-pointer items-center text-sm font-semibold text-[#e81d4b] transition-colors hover:text-[#e81d4b]/80"
+          className="mt-4 flex cursor-pointer items-center text-sm font-semibold text-[#217aff] transition-colors hover:text-[#217aff]/80"
         >
           Показать полностью
           <svg
