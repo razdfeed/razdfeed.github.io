@@ -34,6 +34,7 @@ interface PathPageProps {
 export async function generateMetadata({ params }: PathPageProps): Promise<Metadata> {
   const { path } = await params;
   const segments = path ?? [];
+  console.log('[generateMetadata] segments:', JSON.stringify(segments));
 
   if (segments.length === 0) {
     return {};
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
     fetchAuthors(),
     fetchAllPosts(),
   ]);
+  console.log('[generateMetadata] authors:', authors.length, 'posts:', posts.length);
 
   if (segments.length === 1) {
     const author = findAuthor(authors, segments[0]);

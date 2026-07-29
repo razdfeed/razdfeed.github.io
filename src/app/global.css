@@ -56,3 +56,13 @@ html > body[data-scroll-locked] {
 blockquote {
   border-left-color: #e81d4b !important;
 }
+
+.prose img {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose p:has(img:only-child) {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
