@@ -280,9 +280,9 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         </button>
       )}
 
-      {expanded && post.sourceType === 'telegram' && post.authorUrl && (
+      {expanded && post.sourceType === 'telegram' && post.url && (
         <a
-          href={post.authorUrl}
+          href={post.url}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#e3f2fd] px-3 py-1.5 text-sm font-medium text-[#2b6cb0] transition-colors hover:bg-[#bbdefb] dark:bg-[#17212b] dark:text-[#8ab4de] dark:hover:bg-[#1e2b3a]"
