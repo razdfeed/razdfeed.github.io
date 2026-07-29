@@ -46,6 +46,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://razdfeed.github.io',
   },
+  verification: {
+    other: {
+      'yandex-verification': '9f2d74b01bee3d25',
+    },
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
