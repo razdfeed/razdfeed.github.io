@@ -52,3 +52,7 @@ html > body[data-scroll-locked] {
   margin-left: auto !important;
   margin-right: auto !important;
 }
+
+blockquote {
+  border-left-color: #e81d4b !important;
+}

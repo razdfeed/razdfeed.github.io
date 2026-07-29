@@ -260,7 +260,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-4 flex cursor-pointer items-center text-sm font-semibold text-fd-primary transition-colors hover:text-fd-primary/80"
+          className="mt-4 flex cursor-pointer items-center text-sm font-semibold text-[#e81d4b] transition-colors hover:text-[#e81d4b]/80"
         >
           Показать полностью
           <svg
@@ -278,6 +278,21 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
             <path d="m6 9 6 6 6-6" />
           </svg>
         </button>
+      )}
+
+      {expanded && post.sourceType === 'telegram' && post.authorUrl && (
+        <a
+          href={post.authorUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#17212b] px-3 py-1.5 text-sm font-medium text-[#8ab4de] transition-colors hover:bg-[#1e2b3a] dark:bg-[#17212b] dark:text-[#8ab4de] dark:hover:bg-[#1e2b3a]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" className="text-[#3390ec]">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.467.143a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.008-.033.015-.154-.058-.218s-.185-.043-.265-.025c-.113.025-1.932 1.226-5.454 3.6-.516.354-.983.527-1.4.518-.462-.01-1.35-.26-2.011-.475-.812-.263-1.456-.404-1.397-.858.029-.234.362-.474 1-.72 3.916-1.706 6.526-2.833 7.832-3.378 3.726-1.55 4.5-1.819 5.002-1.827z" />
+          </svg>
+          @{post.authorLogin}
+        </a>
       )}
     </article>
   );
