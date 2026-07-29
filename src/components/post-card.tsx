@@ -285,7 +285,7 @@ export function PostCard({ post, author, lazy = false }: PostCardProps) {
           href={post.authorUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#17212b] px-3 py-1.5 text-sm font-medium text-[#8ab4de] transition-colors hover:bg-[#1e2b3a] dark:bg-[#17212b] dark:text-[#8ab4de] dark:hover:bg-[#1e2b3a]"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#e3f2fd] px-3 py-1.5 text-sm font-medium text-[#2b6cb0] transition-colors hover:bg-[#bbdefb] dark:bg-[#17212b] dark:text-[#8ab4de] dark:hover:bg-[#1e2b3a]"
           onClick={(e) => e.stopPropagation()}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" className="text-[#3390ec]">
