@@ -38,6 +38,7 @@ import {
   fetchAllPosts,
   fetchAuthors,
   fetchAuthorsMeta,
+  fetchAuthorPosts,
   findAuthor,
   type FeedPost,
   type AuthorEntry,
@@ -406,12 +407,11 @@ export function AuthorPageClient() {
   useEffect(() => {
     if (!author) return;
     async function load() {
-      const [allAuthors, allPosts] = await Promise.all([
+      const [allAuthors, authorPosts] = await Promise.all([
         fetchAuthors(),
-        fetchAllPosts(),
+        fetchAuthorPosts(author),
       ]);
       const entry = findAuthor(allAuthors, author);
-      const authorPosts = allPosts.filter((p) => p.authorLogin === author);
       if (!entry && authorPosts.length === 0) {
         setNotFound(true);
       } else {

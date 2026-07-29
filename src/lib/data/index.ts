@@ -69,6 +69,13 @@ interface PostsPage {
   posts: FeedPost[];
 }
 
+interface AuthorPostsFile {
+  generatedAt: string;
+  login: string;
+  postCount: number;
+  posts: FeedPost[];
+}
+
 export async function fetchJson<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${DATA_BASE}/${path}`, { cache: 'no-store' });
@@ -102,4 +109,9 @@ export async function fetchAuthorsMeta(): Promise<AuthorsFile | null> {
 
 export function findAuthor(authors: AuthorEntry[], login: string): AuthorEntry | null {
   return authors.find((a) => a.login === login) ?? null;
+}
+
+export async function fetchAuthorPosts(login: string): Promise<FeedPost[]> {
+  const data = await fetchJson<AuthorPostsFile>(`authors/${login}.json`);
+  return data?.posts ?? [];
 }
