@@ -96,6 +96,10 @@ export async function fetchAuthors(): Promise<AuthorEntry[]> {
   return (data?.authors ?? []).filter((a) => a.postCount > 0);
 }
 
+export async function fetchAuthorsMeta(): Promise<AuthorsFile | null> {
+  return fetchJson<AuthorsFile>('authors.json');
+}
+
 export function findAuthor(authors: AuthorEntry[], login: string): AuthorEntry | null {
   return authors.find((a) => a.login === login) ?? null;
 }

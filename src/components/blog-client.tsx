@@ -37,6 +37,7 @@ import {
   fetchJson,
   fetchAllPosts,
   fetchAuthors,
+  fetchAuthorsMeta,
   findAuthor,
   type FeedPost,
   type AuthorEntry,
@@ -85,13 +86,14 @@ export function HomePageClient() {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [error, setError] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       setError(false);
       setLoadingInitial(true);
-      const [a, firstPage] = await Promise.all([
-        fetchAuthors(),
+      const [meta, firstPage] = await Promise.all([
+        fetchAuthorsMeta(),
         fetchPostsPage('posts-1.json'),
       ]);
       if (firstPage) {
@@ -100,7 +102,8 @@ export function HomePageClient() {
       } else {
         setError(true);
       }
-      setAuthors(a);
+      setAuthors((meta?.authors ?? []).filter((a) => a.postCount > 0));
+      setGeneratedAt(meta?.generatedAt ?? null);
       setChecked(true);
       setLoadingInitial(false);
     }
@@ -181,6 +184,60 @@ export function HomePageClient() {
         </div>
       ) : (
         <>
+          {generatedAt && (
+            <div className="-mt-1 mb-1 flex items-center justify-between gap-2 text-[11px] text-fd-muted-foreground/70 sm:text-xs">
+              <span className="truncate">
+                {(() => {
+                  const date = new Date(generatedAt);
+                  const now = new Date();
+                  const diffMs = now.getTime() - date.getTime();
+                  const diffMins = Math.round(diffMs / 60000);
+                  const diffHours = Math.round(diffMs / 3600000);
+                  const diffDays = Math.round(diffMs / 86400000);
+
+                  const time = date.toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  if (diffMins < 1) return `Лента обновлена только что`;
+                  if (diffMins < 60) {
+                    const suffix = diffMins === 1 ? 'минуту' : diffMins < 5 ? 'минуты' : 'минут';
+                    return `Лента обновлена ${diffMins} ${suffix} назад, в ${time}`;
+                  }
+                  if (diffHours < 24) {
+                    const suffix = diffHours === 1 ? 'час' : diffHours < 5 ? 'часа' : 'часов';
+                    return `Лента обновлена ${diffHours} ${suffix} назад, в ${time}`;
+                  }
+                  if (diffDays === 1) return `Лента обновлена вчера, в ${time}`;
+                  if (diffDays < 7) {
+                    const suffix = diffDays === 1 ? 'день' : diffDays < 5 ? 'дня' : 'дней';
+                    return `Лента обновлена ${diffDays} ${suffix} назад, в ${time}`;
+                  }
+
+                  const dateStr = date.toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year:
+                      date.getFullYear() === now.getFullYear()
+                        ? undefined
+                        : 'numeric',
+                  });
+                  return `Лента обновлена ${dateStr}, в ${time}`;
+                })()}
+              </span>
+              <span className="shrink-0 text-fd-muted-foreground/50">
+                {new Date(generatedAt).toLocaleDateString('ru-RU', {
+                  day: 'numeric',
+                  month: 'long',
+                  year:
+                    new Date(generatedAt).getFullYear() === new Date().getFullYear()
+                      ? undefined
+                      : 'numeric',
+                })}
+              </span>
+            </div>
+          )}
           <div className="divide-y divide-fd-border">
             {allPosts.slice(0, visibleCount).map((post) => (
               <PostCard
