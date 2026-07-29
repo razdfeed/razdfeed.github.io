@@ -5,8 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    # Rebuild every 5 minutes so the site stays fresh after data updates
-    - cron: '*/5 * * * *'
+    # Rebuild every 10 minutes so the site stays fresh after data updates
+    - cron: '*/10 * * * *'
 
 permissions:
   contents: read
