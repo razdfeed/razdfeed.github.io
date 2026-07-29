@@ -83,16 +83,25 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
 
     const author = findAuthor(authors, authorLogin);
     const authorName = author?.name || author?.login || post.author;
-    const description = post.body
-      ? post.body.slice(0, 160).replace(/\s+/g, ' ').trim()
-      : `Пост от ${authorName} на RazdFeed`;
+
+    const fallbackTitle =
+      post.linkPreview?.title ??
+      (post.body ? post.body.slice(0, 80).replace(/\s+/g, ' ').trim() : undefined) ??
+      `Пост от ${authorName}`;
+    const title = post.title || fallbackTitle;
+
+    const bodyClean = post.body ? post.body.replace(/!\[.*?\]\(.*?\)/g, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/[#>*_~`\\-]/g, '').replace(/\s+/g, ' ').trim() : '';
+    const description = bodyClean
+      ? bodyClean.slice(0, 160)
+      : post.linkPreview?.description ?? `Пост от ${authorName} на RazdFeed`;
+
     const ogImage = post.media?.images?.[0] ?? post.linkPreview?.image ?? undefined;
 
     return {
-      title: post.title,
+      title,
       description,
       openGraph: {
-        title: post.title,
+        title,
         description,
         type: 'article',
         publishedTime: post.createdAt,
@@ -102,7 +111,7 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
       },
       twitter: {
         card: 'summary_large_image',
-        title: post.title,
+        title,
         description,
         images: ogImage ? [ogImage] : undefined,
       },

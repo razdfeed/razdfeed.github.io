@@ -30,7 +30,7 @@ function SkeletonImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
 
   return (
     <>
-      <span className="relative block w-full min-w-full overflow-hidden rounded-lg">
+      <span className="relative block w-full min-w-full overflow-hidden rounded-lg my-2">
         {!loaded && (
           <span className="skeleton-shimmer aspect-video absolute inset-0 w-full min-w-full" />
         )}
