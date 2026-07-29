@@ -10,8 +10,8 @@ interface DynamicRouteProps {
 
 export function DynamicRoute({ segments, giscusConfig }: DynamicRouteProps) {
   if (!segments || segments.length <= 1) {
-    return <AuthorPageClient key="author" />;
+    return <AuthorPageClient key="author" segments={segments ?? []} />;
   }
 
-  return <BlogPostClient key="post" giscusConfig={giscusConfig} />;
+  return <BlogPostClient key="post" segments={segments} giscusConfig={giscusConfig} />;
 }

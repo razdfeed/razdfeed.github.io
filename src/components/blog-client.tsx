@@ -55,13 +55,6 @@ async function fetchPostsPage(
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function getPathSegments(): string[] {
-  if (typeof window === 'undefined') return [];
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-  const path = window.location.pathname.replace(base, '');
-  return path.split('/').filter(Boolean);
-}
-
 function formatDate(iso: string): string {
   if (!iso) return '';
   const date = new Date(iso);
@@ -388,13 +381,13 @@ function EmptyTOC() {
   );
 }
 
-export function AuthorPageClient() {
-  const PAGE_SIZE = 15;
-  const [segments, setSegments] = useState<string[]>(getPathSegments());
+interface AuthorPageClientProps {
+  segments: string[];
+}
 
-  useEffect(() => {
-    setSegments(getPathSegments());
-  }, []);
+export function AuthorPageClient({ segments: initialSegments }: AuthorPageClientProps) {
+  const PAGE_SIZE = 15;
+  const [segments] = useState<string[]>(initialSegments);
 
   const author = segments[0] ?? '';
 
@@ -524,15 +517,12 @@ export function AuthorPageClient() {
 // ── Blog post page ──────────────────────────────────────────────────────────
 
 interface BlogPostClientProps {
+  segments: string[];
   giscusConfig?: GiscusConfig | null;
 }
 
-export function BlogPostClient({ giscusConfig }: BlogPostClientProps) {
-  const [segments, setSegments] = useState<string[]>(getPathSegments());
-
-  useEffect(() => {
-    setSegments(getPathSegments());
-  }, []);
+export function BlogPostClient({ segments: initialSegments, giscusConfig }: BlogPostClientProps) {
+  const [segments] = useState<string[]>(initialSegments);
 
   const author = segments[0] ?? '';
   const slug = segments[1] ?? '';
