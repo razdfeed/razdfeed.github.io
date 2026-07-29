@@ -90,16 +90,28 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
       `Пост от ${authorName}`;
     const title = post.title || fallbackTitle;
 
-    const bodyClean = post.body ? post.body.replace(/!\[.*?\]\(.*?\)/g, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/[#>*_~`\\-]/g, '').replace(/\s+/g, ' ').trim() : '';
+    const bodyClean = post.body
+      ? post.body
+          .replace(/<img[^>]*>/gi, '')
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+          .replace(/<[^>]+>/g, '')
+          .replace(/[#>*_~`\\-]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+      : '';
     const description = bodyClean
       ? bodyClean.slice(0, 160)
       : post.linkPreview?.description ?? `Пост от ${authorName} на RazdFeed`;
 
     const ogImage = post.media?.images?.[0] ?? post.linkPreview?.image ?? undefined;
+    const keywords = post.labels.length > 0 ? post.labels : undefined;
 
     return {
       title,
       description,
+      keywords,
+      authors: [{ name: authorName }],
       openGraph: {
         title,
         description,
