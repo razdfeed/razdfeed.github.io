@@ -78,7 +78,7 @@ interface AuthorPostsFile {
 
 export async function fetchJson<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${DATA_BASE}/${path}`, { cache: 'no-store' });
+    const res = await fetch(`${DATA_BASE}/${path}`, { cache: 'force-cache' });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
