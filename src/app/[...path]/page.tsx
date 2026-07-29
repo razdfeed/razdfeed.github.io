@@ -1,7 +1,8 @@
 import { DynamicRoute } from '@/components/dynamic-route';
-import { fetchAllPosts, fetchAuthors } from '@/lib/data';
+import { fetchAllPosts, fetchAuthors, findAuthor } from '@/lib/data';
 import { fetchGiscusConfig } from '@/lib/giscus';
 import type { GiscusConfig } from '@/components/giscus-comments';
+import type { Metadata } from 'next';
 
 export async function generateStaticParams() {
   const [authors, posts] = await Promise.all([
@@ -28,6 +29,90 @@ export async function generateStaticParams() {
 
 interface PathPageProps {
   params: Promise<{ path?: string[] }>;
+}
+
+export async function generateMetadata({ params }: PathPageProps): Promise<Metadata> {
+  const { path } = await params;
+  const segments = path ?? [];
+
+  if (segments.length === 0) {
+    return {};
+  }
+
+  const [authors, posts] = await Promise.all([
+    fetchAuthors(),
+    fetchAllPosts(),
+  ]);
+
+  if (segments.length === 1) {
+    const author = findAuthor(authors, segments[0]);
+    if (!author) return {};
+
+    const displayName = author.name || author.login;
+    const description = author.bio
+      ? `${author.bio} — ${author.postCount} пост(ов) на RazdFeed`
+      : `Посты ${displayName} из GitHub Issues на RazdFeed — ${author.postCount} публикаций`;
+
+    return {
+      title: displayName,
+      description,
+      openGraph: {
+        title: `${displayName} | RazdFeed`,
+        description,
+        images: author.avatar ? [author.avatar] : undefined,
+        type: 'profile',
+      },
+      twitter: {
+        card: 'summary',
+        title: `${displayName} | RazdFeed`,
+        description,
+        images: author.avatar ? [author.avatar] : undefined,
+      },
+      alternates: {
+        canonical: `https://razdfeed.github.io/${author.login}/`,
+      },
+    };
+  }
+
+  if (segments.length >= 2) {
+    const [authorLogin, slug] = segments;
+    const post = posts.find(
+      (p) => p.authorLogin === authorLogin && p.slug === slug,
+    );
+    if (!post) return {};
+
+    const author = findAuthor(authors, authorLogin);
+    const authorName = author?.name || author?.login || post.author;
+    const description = post.body
+      ? post.body.slice(0, 160).replace(/\s+/g, ' ').trim()
+      : `Пост от ${authorName} на RazdFeed`;
+    const ogImage = post.media?.images?.[0] ?? post.linkPreview?.image ?? undefined;
+
+    return {
+      title: post.title,
+      description,
+      openGraph: {
+        title: post.title,
+        description,
+        type: 'article',
+        publishedTime: post.createdAt,
+        modifiedTime: post.updatedAt,
+        authors: [authorName],
+        images: ogImage ? [ogImage] : undefined,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: post.title,
+        description,
+        images: ogImage ? [ogImage] : undefined,
+      },
+      alternates: {
+        canonical: `https://razdfeed.github.io/${authorLogin}/${slug}/`,
+      },
+    };
+  }
+
+  return {};
 }
 
 export default async function Page({ params }: PathPageProps) {
