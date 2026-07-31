@@ -1,8 +1,9 @@
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import { Inter } from 'next/font/google';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { YandexMetrika } from '@/components/yandex-metrika';
+import { PwaInstall } from '@/components/pwa-install';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -42,6 +43,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/logo.png',
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'RazdFeed',
+    statusBarStyle: 'black-translucent',
   },
   alternates: {
     canonical: 'https://razdfeed.github.io',
@@ -53,12 +60,17 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: '#0a0a0a',
+};
+
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="ru" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
         <RootProvider search={{ enabled: false }}>{children}</RootProvider>
         <YandexMetrika />
+        <PwaInstall />
       </body>
     </html>
   );
