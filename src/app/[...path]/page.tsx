@@ -10,6 +10,17 @@ export async function generateStaticParams() {
     fetchAllPosts(),
   ]);
 
+  // A statically exported site has no post routes unless the data API answered at
+  // build time. Without this guard a CDN hiccup silently ships an empty site.
+  if (posts.length === 0 && process.env.CI) {
+    throw new Error(
+      'No posts fetched from the data API — refusing to generate an empty site',
+    );
+  }
+  console.info(
+    `[build] static params: ${authors.length} authors, ${posts.length} posts`,
+  );
+
   const paths: { path: string[] }[] = [];
 
   for (const author of authors) {

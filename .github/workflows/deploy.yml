@@ -4,9 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Primary freshness trigger: fetcher-collector dispatches this after publishing new data.
+  repository_dispatch:
+    types: [data-updated]
   schedule:
-    # Rebuild every 10 minutes so the site stays fresh after data updates
-    - cron: '*/10 * * * *'
+    # Safety net only — dispatch is what keeps the site fresh. Daily, off-peak,
+    # because GitHub also silences cron after 60 days without repo activity.
+    - cron: '30 4 * * *'
 
 permissions:
   contents: read
