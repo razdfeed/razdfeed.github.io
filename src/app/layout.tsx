@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import type { Metadata, Viewport } from 'next';
 import { YandexMetrika } from '@/components/yandex-metrika';
 import { PwaInstall } from '@/components/pwa-install';
+import { defaultOgImage } from '@/lib/shared';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,14 +33,14 @@ export const metadata: Metadata = {
     title: 'RazdFeed — Посты от авторов из GitHub',
     description:
       'RazdFeed собирает посты авторов из GitHub Issues в одну ленту.',
-    images: ['/logo.png'],
+    images: [defaultOgImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'RazdFeed — Посты от авторов из GitHub',
     description:
       'RazdFeed собирает посты авторов из GitHub Issues в одну ленту.',
-    images: ['/logo.png'],
+    images: [defaultOgImage],
   },
   icons: {
     icon: '/logo.png',
