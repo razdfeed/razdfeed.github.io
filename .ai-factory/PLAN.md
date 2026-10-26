@@ -1,103 +1,99 @@
-# План: посты не появляются на сайте (сайт не пересобирается)
+# План: превью ссылок в Telegram (og:image для всех страниц)
 
-**Тип:** fix (инфраструктура деплоя)
-**Создан:** 2026-10-26
-**Режимы:** fast, без git-ветки
+- **Тип:** fix (SEO / метаданные)
+- **Ветка:** main (без переключения)
+- **Создан:** 2026-10-26
 
 ## Original Request
-(план создан из `/aif-explore`: разбор «почему не видно статьи https://razdfeed.github.io/dealenx/gh-6», указан баг в `/home/dealenx/Projects/sandbox/fetcher-collector`)
 
-## Диагноз
-`razdfeed.github.io` — статический экспорт Next.js (`output: 'export'`), маршруты постов создаются в
-`generateStaticParams` (`src/app/[...path]/page.tsx`). HTML заморожен на **2026-09-29T22:36**
-(`sitemap.xml` max `lastmod`, последний прогон `Deploy to GitHub Pages`, sha `95680af`).
+можно ли настроить чтобы можно было выводить превью?
 
-Причина: workflow **`.github/workflows/deploy.yml` в `razdfeed/razdfeed.github.io` имеет состояние
-`disabled_inactivity`** — GitHub отключает cron в публичном репо после 60 дней без активности.
-Последний коммит сайта — 2026-07-31 (ровно +60 дней = 29.09).
+Учитывая что картинка работает
+то есть если я отправляю ссылку в мессенджер телеграм то чтобы выводило превью картинки если она есть или выводить иначе логотип razdfeed
 
-Данные при этом живые: `fetcher-collector` публикует `public/data/*` на своём Pages каждые ~20 мин
-(`authors.json` → `dealenx` 166 постов, `gh-6` первым; `posts-1.json` `generatedAt 2026-10-26T09:53`).
-`/dealenx/` рисует пост через клиентский `fetchAuthorPosts`, а клик ведёт на статический
-`/dealenx/gh-6/index.html`, которого нет → 404. То же у `wangel13/tg-334` (25.10).
+## Диагноз (проверено curl'ом по живому сайту и по данным коллектора)
 
-Усилители:
-- `f783d58` (29.07) убрал cross-repo `repository_dispatch` из коллектора — единственный мост
-  «данные обновились → сайт пересобрался» пропал, остался только cron сайта.
-- Cron сайта объявлен `*/10`, реально давал 4–6 прогонов в сутки (GitHub режет `schedule`), т.е.
-  даже живой cron не давал свежести быстрее нескольких часов.
+1. `og:image` отсутствует у **154 из 497** собранных страниц: `/` , `/dealenx/gh-2/`, `/dealenx/gh-3/`, `/dealenx/gh-6/`, 142 телеграм-поста без картинок, 4 страницы `mimikkai`, 67 `wangel13`, `404`.
+2. Причина №1 — `images: undefined` в `openGraph`. Next сливает метаданные неглубоко: объект `openGraph` страницы **целиком** замещает родительский из `src/app/layout.tsx`, поэтому дефолт `['/logo.png']` не наследуется. Доказательство: в `out/index.html` есть `twitter:image` (страница объявила `openGraph`, но не `twitter`) и нет `og:image`; на страницах постов отсутствуют `og:site_name` / `og:locale` из layout.
+3. Причина №2 — источник картинки слишком узкий (`src/app/[...path]/page.tsx:118`): только `post.media.images[0]` и `post.linkPreview.image`. Обложка из тела поста не читается → `gh-6` (обложка `raw.githubusercontent.com/.../cover.jpg`, отдаётся 200 `image/jpeg`) остаётся без превью. По данным 487 постов: 118 `media[0]`, 216 `linkPreview.image`, **11** только тело (`gh-6`, `gh-3`, `gh-2`, 8× YouTube), **142** вообще без картинки.
+4. Попутно: `/docs/*` объявляет `og:image: https://razdfeed.github.io/og/docs/image.webp` → **404** (route `og/docs` в проекте не существует, `getPageImageUrl` из `src/lib/source.ts` генерирует битый URL). Telegram такую картинку просто не покажет.
+5. Попутно: `description` собирается через `.replace(/[#>*_~`\\-]/g, '')` — вырезаются дефисы: в `gh-6` уже видно «Wordдокументы», «ИИагентов». Задевает 357 из 487 постов.
+
+Telegram читает только `<meta>` из HTML, JS не исполняет; кэш превью — **по URL страницы**, а не по картинке (уже отправленная ссылка останется без превью до `@WebpageBot`).
 
 ## Settings
-- Testing: no — в обоих репозиториях нет тест-раннера; проверка через smoke-команды (curl/gh)
-- Logging: standard
-- Docs: yes — обновить README коллектора (поток данных → пересборка сайта) и комментарий в workflow
 
-## Research Context
-(пропущено — `.ai-factory/RESEARCH.md` не создавался, план опирается на исследование в сессии и
-живые данные GitHub API по состоянию на 2026-10-26)
+- Testing: yes, standard — один файл `tests/og.test.ts` на `bun test` (раннера в репо нет, добавлять CI-шаг не нужно)
+- Logging: verbose — по одной строке `console.info` на страницу в момент `generateMetadata` (видно в логе `Build` в Actions), с указанием выбранного источника картинки
+- Docs: no
 
-## Commit Plan
-- **Commit 1** (сайт, задачи 1, 2, 5): `fix(ci): rebuild on repository_dispatch, guard empty data payload`
-- **Commit 2** (коллектор, задачи 3, 6): `fix(ci): trigger site rebuild after data deploy`
+## Skipped (сознательно вне рамок)
 
-Задача 4 — операционная (секрет), коммита не даёт.
+- `og:site_name` / `og:locale`, перетёртые на страницах постов — на вид карточки в Telegram не влияют (домен показывается и так), правка отдельная.
+- Генерация персональных карточек с заголовком через `takumi-js` (зависимость уже стоит, но не используется) — даёт разные картинки для 142 «текстовых» постов; дороже по времени билда, отдельная задача.
+- `og:image` для видео-постов без картинки (33 шт.) — попадут на дефолтную карточку, как и прочие.
 
 ## Tasks
 
-### Phase 1: Разблокировать сейчас (ops, без изменений кода)
-- [x] **Task 1** — включить workflow сайта и пересобрать страницы.
-  - `gh workflow enable deploy.yml -R razdfeed/razdfeed.github.io`
-  - `gh workflow run deploy.yml -R razdfeed/razdfeed.github.io`
-  - Дождаться зелёного прогона, проверить: `curl -o /dev/null -w '%{http_code}' https://razdfeed.github.io/dealenx/gh-6/` → `200`, и `curl -s https://razdfeed.github.io/sitemap.xml | grep -c dealenx/gh-6` → `1`.
-  - Лог: вывод `gh run list -R razdfeed/razdfeed.github.io -L 3`.
+### Phase 1: Хелперы и дефолтная карточка
 
-### Phase 2: Сайт (`razdfeed/razdfeed.github.io`)
-- [x] **Task 2** — триггер по событию вместо мёртвого cron. Файл `.github/workflows/deploy.yml`.
-  - Добавить в `on:` блок `repository_dispatch: types: [data-updated]`.
-  - Заменить `schedule: cron: '*/10 * * * *'` на суточный safety-net `cron: '30 4 * * *'` (комментарий: основной триггер — `repository_dispatch` из коллектора, cron — страховка).
-  - Прочее (`push`, `workflow_dispatch`, permissions, concurrency) не трогать.
-  - Лог: имя события видно в `gh run list --json event` — прогон после dispatch должен иметь `event: repository_dispatch`.
+- [x] **Task 1** — `src/lib/og.ts`: чистые серверные хелперы (без `DOMParser`, чтобы работали в статическом экспорте).
+  - `firstImageUrl(body?: string | null): string | null` — первая картинка тела: markdown `![alt](URL)` или HTML `<img src="URL">`; принимать **только** абсолютные `http(s)` (относительный путь в `og:image` бесполезен для Telegram → `null`).
+  - `toPlainText(body?: string | null): string` — текущая логика очистки из `page.tsx`, но без вырезания дефисов: класс `/[#>*_~`\\]/g` вместо `/[#>*_~`\\-]/g`, картинки и ссылки вырезаются **до** снятия тегов.
+  - `DEFAULT_OG_IMAGE = '/og-default.jpg'` — в `src/lib/shared.ts` (там уже живут общие константы), не в `og.ts`, чтобы его же импортировали layout/home/docs.
+  - Проверка кода: `bun run types:check` проходит. Для этого в `tsconfig.json` добавить `"tests"` в `exclude` (рядом с `"scripts"`): `@types/bun` в проекте нет, иначе `tsc` упадёт на `import { test } from 'bun:test'`.
+  - Лог: ничего (чистые функции).
 
-- [x] **Task 5** — не деплоить пустой сайт. Файл `src/app/[...path]/page.tsx`, `generateStaticParams`.
-  - Если `posts.length === 0` и `process.env.CI` — `throw new Error('No posts fetched from data API — refusing to generate an empty site')`. Сейчас `fetchJson` глотает ошибки (`return null`) и сайт молча собирается без постов.
-  - Fallback `_author` для локальной разработки оставить.
-  - Лог: текст исключения попадёт в лог шага `Build`, этого достаточно.
-
-### Phase 3: Коллектор (`razdfeed/fetcher-collector`)
-- [ ] **Task 4** (ops, до Task 3) — секрет для dispatch.
-  - Создать fine-grained PAT: доступ только к `razdfeed/razdfeed.github.io`, permission **Contents: Read and write**, срок ≤ 1 год.
-  - `gh secret set WEBSITE_DISPATCH_TOKEN -R razdfeed/fetcher-collector`
-  - Лог: `gh secret list -R razdfeed/fetcher-collector` показывает имя секрета.
-
-- [x] **Task 3** — вернуть dispatch, но с видимым падением. Файл `.github/workflows/deploy.yml`.
-  - В job `collect-and-deploy` после шага `Deploy to GitHub Pages` добавить шаг `Trigger site rebuild`:
-    ```yaml
-    - name: Trigger site rebuild
-      if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-      env:
-        TOKEN: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
-      run: |
-        curl --fail-with-body -sS -X POST \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer $TOKEN" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://api.github.com/repos/razdfeed/razdfeed.github.io/dispatches \
-          -d '{"event_type":"data-updated"}'
+- [x] **Task 2** — `public/og-default.jpg`: дефолтная карточка 1200×630 (~92 КБ), чёрный фон `#0a0a0a`, логотип по центру. Воспроизводимая команда (уже прогнана, результат просмотрен):
+    ```bash
+    magick public/logo-with-bg.png -resize 560x560 -background '#0a0a0a' \
+      -gravity center -extent 1200x630 -strip -quality 86 -sampling-factor 4:2:0 \
+      public/og-default.jpg
     ```
-  - Отличие от откаченного `462e00d`: `--fail-with-body` (было `curl -L` без `--fail` — 401/404 проходили молча, что и стало причиной «не работает» → реверта).
-  - Пустой `WEBSITE_DISPATCH_TOKEN` → `::warning::` + `exit 0` (иначе прогоны красные каждые 20 минут до создания секрета). Заданный, но отклонённый токен → `curl` с `--fail-with-body` роняет job.
-  - Лог: шаг печатает ответ API (204 = ок) либо тело ошибки и роняет job.
+  - Именно JPEG, а не `logo.png` (1024×1024 RGBA, 2.1 МБ): квадратный логотип в 1.91:1 Telegram кропает, большой файл медленно тянется краулером.
+  - Лог: `identify -format '%wx%h %b' public/og-default.jpg` в момент проверки.
 
-### Phase 4: Документация
-- [x] **Task 6** — README коллектора: в раздел «Принцип работы» добавить п.5 «после деплоя данных отправляет `repository_dispatch` (`data-updated`) в `razdfeed/razdfeed.github.io`», с пометкой про `WEBSITE_DISPATCH_TOKEN`.
+### Phase 2: Метаданные
+
+- [x] **Task 3** — `src/app/[...path]/page.tsx`, `generateMetadata` (зависит от 1, 2):
+  - пост: `const ogImage = post.media?.images?.[0] ?? post.linkPreview?.image ?? firstImageUrl(post.body) ?? DEFAULT_OG_IMAGE;`
+  - `openGraph.images` и `twitter.images` **всегда** `[ogImage]` — `undefined` больше не возвращается (иначе объект снова перетирает layout).
+  - автор: `images: [author.avatar || DEFAULT_OG_IMAGE]` в обоих блоках.
+  - `description`: `const bodyClean = toPlainText(post.body);` (дефисы сохраняются).
+  - `console.info('[og] %s -> %s', `${authorLogin}/${slug}`, источник)` в конце ветки поста; источник — одно из `media`, `linkPreview`, `body`, `default`.
+  - Лог: в выводе `next build` должно быть ровно по строке `[og] ...` на каждый пост, значение `default` — только у постов без картинки.
+  - Проверка `gh-6` после билда: `grep -o '<meta property="og:image"[^>]*>' out/dealenx/gh-6/index.html` → `.../articles/typst-vs-word/cover.jpg`.
+
+- [x] **Task 4** — дефолт на страницах без своей картинки (зависит от 1, 2):
+  - `src/app/layout.tsx`: `images: [defaultOgImage]` в `openGraph` и `twitter` (сейчас `'/logo.png'`); `icons.icon` оставить `'/logo.png'`.
+  - `src/app/(home)/page.tsx`: явные `images: [defaultOgImage]` в `openGraph` и `twitter` — иначе `/` снова теряет `og:image` из-за перетирания.
+  - Лог: `grep -o '<meta property="og:image"[^>]*>' out/index.html out/authors/index.html`.
+
+- [x] **Task 5** — `og:image` страниц `/docs/*` указывает на несуществующий `/og/docs/image.webp` (404):
+  - `src/app/docs/[[...slug]]/page.tsx`: `images: defaultOgImage`.
+  - Удалить мёртвый путь: `getPageImageUrl` из `src/lib/source.ts` и `docsImageRoute` из `src/lib/shared.ts` (используются только там; `getPageMarkdownUrl` / `docsContentRoute` не трогать).
+  - Лог: `grep -rn 'og/docs\|getPageImageUrl' src` → пусто.
+
+## Commit Plan
+
+- **Commit 1** (tasks 1–3): `feat(seo): take og:image from post body and always emit a preview card`
+- **Commit 2** (tasks 4–5): `fix(seo): default OG card on home, layout and docs; drop broken /og/docs URL`
 
 ## Проверка (smoke, после реализации)
-1. `gh workflow run deploy.yml -R razdfeed/fetcher-collector` → зелёный прогон, шаг `Trigger site rebuild` = 204.
-2. `gh run list -R razdfeed/razdfeed.github.io -L 1 --json event,conclusion` → `repository_dispatch`, `success`.
-3. `curl -o /dev/null -w '%{http_code}' https://razdfeed.github.io/dealenx/gh-6/` → `200`.
-4. Новый пост после этого прогона (например обновить discussion) появляется как отдельная страница без ручных действий.
+
+1. `bun test tests/og.test.ts` → зелёный: абсолютный markdown/HTML, отказ на относительном URL, `toPlainText` сохраняет дефис.
+2. `bun run build` → в логе есть строки `[og]`, билд не падает на guard'е «No posts fetched».
+3. `bun run types:check` → без ошибок (при этом `fumadocs-mdx && next typegen` — часть скрипта; если `next typegen` не в состоянии работать без `.next`, ограничиться `bunx tsc --noEmit`).
+4. По `out/`:
+   - `out/dealenx/gh-6/index.html` → `og:image` = `cover.jpg` (из тела);
+   - `out/wangel13/tg-334/index.html` → `og:image` = `cdn4.telesco.pe/...` (из `media`/`linkPreview`);
+   - `out/dealenx/gh-2/index.html` → `og:image` = `github.com/user-attachments/...` (HTML `<img>` в теле);
+   - `out/index.html`, `out/authors/index.html`, `out/docs/index.html` → `og:image` = `https://razdfeed.github.io/og-default.jpg`;
+   - `grep -rL 'og:image' out --include=index.html` → пусто (сейчас `404.html` и `_not-found` уже наследуют картинку из layout; они и служат контролем, что наследование работает, когда `openGraph` не перетирается).
+5. После деплоя: старый `https://razdfeed.github.io/dealenx/gh-6/` в Telegram покажет новую карточку только после `@WebpageBot` (кэш по URL) либо в новом чате; проверить `curl -s ... | grep og:image`.
 
 ## Риски
-- Fine-grained PAT истекает (максимум 1 год) — по истечении dispatch начнёт падать с 401, job станет красным (это и есть желаемое поведение вместо тихой деградации). Дата в комментарии к секрету.
-- `repository_dispatch` не «оживляет» отключённый по неактивности repo-таймер сам по себе — но каждый dispatch создаёт прогон, т.е. активность; суточный cron остаётся страховкой.
-- Полная пересборка сайта ~6 раз в сутки (столько реально прогонов у коллектора) — та же нагрузка, что была до 29.09.
+
+- `raw.githubusercontent.com` / `cdn4.telesco.pe` / `github-production-user-asset` отдают картинки ботам (проверено UA `TelegramBot`, 9/10 и 2/2 — 200 `image/jpeg|png`). Но 8 постов с `img.youtube.com` дадут миниатюру YouTube 480×360 — не 1.91:1, Telegram растянет/обрежет.
+- Мёртвая ссылка на картинку не ломает карточку: Telegram покажет превью без фото. Падение только если HTML недоступен.
+- Если позже захочется уникальные карточки — `takumi-js` уже в зависимостях, `public/og/<author>/<slug>.jpg` генерировать на этапе билда.
