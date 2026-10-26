@@ -1,6 +1,8 @@
 import { DynamicRoute } from '@/components/dynamic-route';
 import { fetchAllPosts, fetchAuthors, findAuthor } from '@/lib/data';
 import { fetchGiscusConfig } from '@/lib/giscus';
+import { firstImageUrl, toPlainText } from '@/lib/og';
+import { defaultOgImage } from '@/lib/shared';
 import type { GiscusConfig } from '@/components/giscus-comments';
 import type { Metadata } from 'next';
 
@@ -70,14 +72,14 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
       openGraph: {
         title: `${displayName} | RazdFeed`,
         description,
-        images: author.avatar ? [author.avatar] : undefined,
+        images: [author.avatar || defaultOgImage],
         type: 'profile',
       },
       twitter: {
         card: 'summary',
         title: `${displayName} | RazdFeed`,
         description,
-        images: author.avatar ? [author.avatar] : undefined,
+        images: [author.avatar || defaultOgImage],
       },
       alternates: {
         canonical: `https://razdfeed.github.io/${author.login}/`,
@@ -101,22 +103,26 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
       `Пост от ${authorName}`;
     const title = post.title || fallbackTitle;
 
-    const bodyClean = post.body
-      ? post.body
-          .replace(/<img[^>]*>/gi, '')
-          .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
-          .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-          .replace(/<[^>]+>/g, '')
-          .replace(/[#>*_~`\\-]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-      : '';
+    const bodyClean = toPlainText(post.body);
     const description = bodyClean
       ? bodyClean.slice(0, 160)
       : post.linkPreview?.description ?? `Пост от ${authorName} на RazdFeed`;
 
-    const ogImage = post.media?.images?.[0] ?? post.linkPreview?.image ?? undefined;
+    // Page-level openGraph replaces the layout object wholesale, so an undefined
+    // image would drop og:image entirely — always emit something.
+    const bodyImage = firstImageUrl(post.body);
+    const ogImage =
+      post.media?.images?.[0] ?? post.linkPreview?.image ?? bodyImage ?? defaultOgImage;
+    const ogImageSource = post.media?.images?.[0]
+      ? 'media'
+      : post.linkPreview?.image
+        ? 'linkPreview'
+        : bodyImage
+          ? 'body'
+          : 'default';
     const keywords = post.labels.length > 0 ? post.labels : undefined;
+
+    console.info('[og] %s/%s -> %s', authorLogin, slug, ogImageSource);
 
     return {
       title,
@@ -130,13 +136,13 @@ export async function generateMetadata({ params }: PathPageProps): Promise<Metad
         publishedTime: post.createdAt,
         modifiedTime: post.updatedAt,
         authors: [authorName],
-        images: ogImage ? [ogImage] : undefined,
+        images: [ogImage],
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: [ogImage],
       },
       alternates: {
         canonical: `https://razdfeed.github.io/${authorLogin}/${slug}/`,
