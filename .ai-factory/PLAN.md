@@ -51,7 +51,7 @@ https://razdfeed.github.io/dealenx/gh-6/
 
 ### Phase 1: Markdown-эндпоинт для /docs
 
-- [ ] **Task 1** — создать `src/app/llms.mdx/docs/[[...slug]]/route.ts`:
+- [x] **Task 1** — создать `src/app/llms.mdx/docs/[[...slug]]/route.ts`:
   ```ts
   import { notFound } from 'next/navigation';
   import { getLLMText, source } from '@/lib/source';
@@ -79,7 +79,7 @@ https://razdfeed.github.io/dealenx/gh-6/
 
 ### Phase 2: Кнопки на странице поста
 
-- [ ] **Task 2** — создать `src/components/post-actions.tsx` (новый, `'use client'`), экспорт `PostActions({ post }: { post: FeedPost })` (зависит от 1 не нужен, но ставим после — общий этап проверки):
+- [x] **Task 2** — создать `src/components/post-actions.tsx` (новый, `'use client'`), экспорт `PostActions({ post }: { post: FeedPost })` (зависит от 1 не нужен, но ставим после — общий этап проверки):
   ```tsx
   const url = `https://razdfeed.github.io/${post.authorLogin}/${post.slug}/`;
   const prompt = `Read ${url}, I want to ask questions about it.`;
@@ -93,7 +93,7 @@ https://razdfeed.github.io/dealenx/gh-6/
   - Отдельный файл, а не инлайн в `blog-client.tsx` (там уже 698 строк) — компонент тестируется/меняется независимо.
   - Проверка: `bun run types:check`.
 
-- [ ] **Task 3** — вставить блок в `src/components/blog-client.tsx`, в `BlogPostClient`, между блоком `post.forwardedFrom` и `<DocsBody>` (сейчас ~строка 622):
+- [x] **Task 3** — вставить блок в `src/components/blog-client.tsx`, в `BlogPostClient`, между блоком `post.forwardedFrom` и `<DocsBody>` (сейчас ~строка 622):
   ```tsx
   <div className="mb-4 border-b pb-4">
     <PostActions post={post} />
@@ -105,7 +105,7 @@ https://razdfeed.github.io/dealenx/gh-6/
 
 ### Phase 3: Проверка
 
-- [ ] **Task 4** — сквозная проверка (зависит от 1, 2, 3):
+- [x] **Task 4** — сквозная проверка (зависит от 1, 2, 3):
   - `bun run types:check` — без ошибок.
   - `bun run build`, затем в `out/`:
     - `ls out/llms.mdx/docs/*/content.md` → 3 файла (index, connect, rules);

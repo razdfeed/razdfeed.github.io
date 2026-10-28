@@ -21,6 +21,7 @@ import { SourcePopup } from '@/components/source-popup';
 import { TelegramIcon } from '@/components/telegram-icon';
 import { MediaImage } from '@/components/media-image';
 import { MediaGallery } from '@/components/media-gallery';
+import { PostActions } from '@/components/post-actions';
 
 /**
  * razdfeed frontend — reads data from the fetcher-collector GitHub Pages site.
@@ -634,6 +635,10 @@ export function BlogPostClient({ segments: initialSegments, giscusConfig }: Blog
               </span>
             </div>
           )}
+
+          <div className="mb-4 border-b pb-4">
+            <PostActions post={post} />
+          </div>
 
           <DocsBody>
             {post.media && post.media.images.length > 0 && (
